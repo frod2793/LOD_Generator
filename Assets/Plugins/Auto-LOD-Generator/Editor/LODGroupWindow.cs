@@ -18,7 +18,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private const string _iconPath = "Assets/Plugins/Auto-LOD-Generator/Editor/icon.png";
 
         private bool _isColider;
-        public string SavePath;
+        public string SavePath = "Assets/";
 
         private void OnEnable()
         {
@@ -44,15 +44,18 @@ namespace Plugins.Auto_LOD_Generator.Editor
         }
 
     private void OnGUI()
-{
+    {
     GUILayout.BeginArea(new Rect(0f, 0f, position.width, position.height));
     GUILayout.BeginHorizontal(); 
 
     GUILayout.BeginVertical(); 
     GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
+    if (GUILayout.Button("Select Save Path", GUILayout.Height(20f), GUILayout.Width(position.width-7f)))
+    {
+        SavePath = EditorUtility.OpenFolderPanel("Select Save Path", Application.dataPath, "folder");
+    }
 
     SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f), GUILayout.Width(position.width-7f));
-
     GUILayout.Space(20);
     _isColider = EditorGUILayout.Toggle("Colider", _isColider);
     if (_objectSelected)
