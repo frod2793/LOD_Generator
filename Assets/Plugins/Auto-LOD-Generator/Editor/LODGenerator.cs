@@ -19,7 +19,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
             var newParent = new GameObject(originalObject.name + " LOD Group");
             newParent.AddComponent<LODGroup>();
 
-            var lods = new LOD[count]; // Adjusted the size of the array
+            var lods = new LOD[count]; 
 
             var qualityFactors = new List<float>()
             {
@@ -38,7 +38,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
                 var renderers = newGameObj.GetComponentsInChildren<Renderer>();
 
-                lods[i] = new LOD(0.5F / (i + 1), renderers); // Adjusted the index
+                lods[i] = new LOD(0.5F / (i + 1), renderers); 
 
                 if (i == 0&&isColider)
                 {
@@ -58,7 +58,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
             var meshFilter = gameObject.GetComponent<MeshFilter>();
             if (meshFilter != null)
             {
-                // Use the saved mesh
+             
                 var originalMesh = meshFilter.sharedMesh;
                 var meshSimplifier = new UnityMeshSimplifier.MeshSimplifier();
                 meshSimplifier.Initialize(originalMesh);
@@ -81,7 +81,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 var assetPath = path + "/" + name + "/" + gameObject.name + "_SimplifiedMesh.asset";
                 SaveMeshToAsset(destMesh, assetPath, name);
 
-                // Load the saved mesh asset and apply it
+             
                 var loadedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
                 if (loadedMesh != null)
                 {
@@ -107,7 +107,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 return;
             }
 
-            // Ensure the directory exists
+          
             var directory = System.IO.Path.GetDirectoryName(assetPath);
             if (string.IsNullOrWhiteSpace(directory))
             {
@@ -120,19 +120,19 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 System.IO.Directory.CreateDirectory(directory);
             }
 
-            // Create a temporary GameObject to hold the mesh
+         
             var tempGameObject = new GameObject(mesh.name);
             var meshFilter = tempGameObject.AddComponent<MeshFilter>();
             meshFilter.sharedMesh = mesh;
             var meshRenderer = tempGameObject.AddComponent<MeshRenderer>();
 
-            // Clean up the temporary GameObject
+           
             GameObject.DestroyImmediate(tempGameObject);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            // Save the mesh asset
+           
             AssetDatabase.CreateAsset(mesh, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

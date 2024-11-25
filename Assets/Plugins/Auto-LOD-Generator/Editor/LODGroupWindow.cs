@@ -27,8 +27,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
             _objectSelected = false;
             _objectsToSimplify = new List<GameObject>();
             GetWindow(typeof(LODGroupWindow));
-            minSize = new Vector2(600, 800f); // Set a more adaptable minimum size
-            maxSize = new Vector2(1200, 1600f); // Set a more adaptable maximum size
+            minSize = new Vector2(600, 800f); 
+            maxSize = new Vector2(1200, 1600f); 
 
             _reorderableList = new ReorderableList(_objectsToSimplify, typeof(GameObject), true, true, true, true)
             {
@@ -46,9 +46,9 @@ namespace Plugins.Auto_LOD_Generator.Editor
     private void OnGUI()
 {
     GUILayout.BeginArea(new Rect(0f, 0f, position.width, position.height));
-    GUILayout.BeginHorizontal(); // side by side columns
+    GUILayout.BeginHorizontal(); 
 
-    GUILayout.BeginVertical(); // Layout objects vertically in each column
+    GUILayout.BeginVertical(); 
     GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
 
     SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f), GUILayout.Width(position.width-7f));
