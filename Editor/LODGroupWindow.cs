@@ -15,7 +15,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private string _objPath;
         private List<GameObject> _objectsToSimplify;
         private ReorderableList _reorderableList;
-        private const string _iconPath = "Assets/Plugins/Auto-LOD-Generator/Editor/icon.png";
+        private const string _iconPath = "Assets/LOD_Generator/Editor/icon.png";
 
         private bool _isColider;
         public string SavePath = "Assets/";
