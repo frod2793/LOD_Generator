@@ -1,0 +1,18 @@
+{
+    "name": "frod.LOD_Generator.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bf6dc59e1402c8f47a4cd9c8bb47579a",
+        "GUID:a09b502a3463f794a83cf80a67a246d2",
+        "GUID:77ccaf49895b0d64e87cd4b4faf83c49"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
