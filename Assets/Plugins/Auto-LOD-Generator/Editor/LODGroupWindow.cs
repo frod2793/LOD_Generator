@@ -164,7 +164,15 @@ namespace Plugins.Auto_LOD_Generator.Editor
             GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
             if (GUILayout.Button("Select Save Path", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
             {
-                SavePath = EditorUtility.OpenFolderPanel("Select Save Path", Application.dataPath, SavePath);
+                var selectedPath = EditorUtility.OpenFolderPanel("Select Save Path", Application.dataPath, SavePath);
+                if (selectedPath.StartsWith(Application.dataPath))
+                {
+                    SavePath = selectedPath.Replace(Application.dataPath, "Assets");
+                }
+                else
+                {
+                    Debug.LogError("The selected path must be within the Assets directory.");
+                }
             }
 
             SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f),

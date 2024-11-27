@@ -107,7 +107,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 return;
             }
 
-          
             var directory = System.IO.Path.GetDirectoryName(assetPath);
             if (string.IsNullOrWhiteSpace(directory))
             {
@@ -120,19 +119,13 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 System.IO.Directory.CreateDirectory(directory);
             }
 
-         
             var tempGameObject = new GameObject(mesh.name);
             var meshFilter = tempGameObject.AddComponent<MeshFilter>();
             meshFilter.sharedMesh = mesh;
             var meshRenderer = tempGameObject.AddComponent<MeshRenderer>();
 
-           
             GameObject.DestroyImmediate(tempGameObject);
 
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-           
             AssetDatabase.CreateAsset(mesh, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
