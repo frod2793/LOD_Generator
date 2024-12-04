@@ -1,12 +1,13 @@
 {
-    "name": "frod.LOD_Generator.Editor",
+    "name": "HLODEditor",
     "rootNamespace": "",
     "references": [
-        "GUID:77ccaf49895b0d64e87cd4b4faf83c49",
-        "GUID:00af4b5c330784340bf48969bdef1fff",
-        "GUID:d14ed857634195d4291e8b118db2c0f4"
+        "HLOD",
+        "UnityMeshSimplifier"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
