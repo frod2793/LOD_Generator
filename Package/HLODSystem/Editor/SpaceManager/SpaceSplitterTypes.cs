@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 
 namespace Unity.HLODSystem.SpaceManager
@@ -26,7 +27,10 @@ namespace Unity.HLODSystem.SpaceManager
         public static ISpaceSplitter CreateInstance(HLOD hlod)
         {
             if (s_Types.IndexOf(hlod.SpaceSplitterType) < 0)
+            {
+            
                 return null;
+            }
             
             ISpaceSplitter spaceSplitter =
                 (ISpaceSplitter) Activator.CreateInstance(hlod.SpaceSplitterType,

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using NUnit.Framework;
 using Unity.HLODSystem.SpaceManager;
 using Unity.HLODSystem.Utils;
 using UnityEditor;
@@ -57,6 +59,8 @@ namespace Unity.HLODSystem
         private bool isShowUserDataSerializer = true;
 
         private bool isFirstOnGUI = true;
+        
+        public static string SavePath = "Assets/";
         
         private ISpaceSplitter m_splitter;
 
@@ -325,7 +329,95 @@ namespace Unity.HLODSystem
             serializedObject.ApplyModifiedProperties();
             isFirstOnGUI = false;
         }
+      
+        public void AddHlodComponent(GameObject Target)
+        {
+            Target.AddComponent<HLOD>();
+        }
 
+
+        public void GetCameraHlodCameraRecognizer()
+        {
+            if (!Equals(Camera.main,null))
+            {
+                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(),null))
+                {
+                    Camera.main.gameObject.AddComponent<HLODCameraRecognizer>();
+                }
+            }
+        }
+        
+        public void SetLoclDirectory(string path)
+        { 
+            SavePath = path;
+        }
+
+
+        public string GetLocalDirectory()
+        {
+            return SavePath;
+        }
+        
+        public List<GameObject> GetHLOD_GameObjects()
+        {
+            
+            List<GameObject> objectsToSimplify = new List<GameObject>();
+            var hlodObjects = GameObject.FindObjectsOfType<HLOD>();
+            foreach (var hlodObject in hlodObjects)
+            {
+                objectsToSimplify.Add(hlodObject.gameObject);
+            }
+    
+            return objectsToSimplify;
+        }
+
+        public void GenerateHLOD( GameObject hlod)
+        {
+           HLOD _hlod =  hlod.GetComponent<HLOD>();
+           
+           // if (m_splitter == null)
+           // {
+           //     m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+           // }
+           //
+           // if (m_splitter != null)
+           // {
+           //     int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+           //     EditorGUILayout.LabelField($"The HLOD tree will be created with {subTreeCount} sub trees.",
+           //         Styles.BlueTextColor);
+           // }
+           m_SpaceSplitterTypes = SpaceManager.SpaceSplitterTypes.GetTypes();
+           m_SpaceSplitterNames = m_SpaceSplitterTypes.Select(t => t.Name).ToArray();
+           
+           if (m_SpaceSplitterTypes.Length > 0)
+           {
+               int spaceSplitterIndex = Math.Max(Array.IndexOf(m_SpaceSplitterTypes, _hlod.SpaceSplitterType), 0);
+               spaceSplitterIndex = 0;
+               _hlod.SpaceSplitterType = m_SpaceSplitterTypes[spaceSplitterIndex];
+
+               // var info = m_SpaceSplitterTypes[spaceSplitterIndex].GetMethod("OnGUI");
+               // if (info != null)
+               // {
+               //     if ( info.IsStatic == true )
+               //     {
+               //         info.Invoke(null, new object[] { _hlod.SpaceSplitterOptions });
+               //     }
+               // }
+            
+               m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+               
+
+               if (m_splitter != null)
+               {
+                   int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+         
+               }
+
+           }
+           CoroutineRunner.RunCoroutine(HLODCreator.Create(_hlod));
+        }
+        
+        
     }
-
+ 
 }
