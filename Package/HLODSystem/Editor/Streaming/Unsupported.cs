@@ -383,6 +383,7 @@ namespace Unity.HLODSystem.Streaming
                     if (selectPath.EndsWith("/") == false)
                         selectPath += "/";
                     options.OutputDirectory = selectPath;
+                    //todo: 폴더 위치 변경 시 기존에 생성된 파일들도 이동해야함
                 }
                 else
                 {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using Plugins.Auto_LOD_Generator.Editor;
+using Unity.HLODSystem;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -18,6 +19,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private const string _iconPath = "Assets/LOD_Generator/Editor/icon.png";
 
         private bool _isColider;
+        private bool _isHLOD;
+        
         public string SavePath = "Assets/";
         private float minuswidth = 7f;
         
@@ -155,11 +158,14 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private void Toggle_Colider_GUI()
         {
             GUILayout.Space(20);
-            _isColider = EditorGUILayout.Toggle("Colider", _isColider);
+            _isColider = EditorGUILayout.Toggle("Use Colider", _isColider);
+            GUILayout.Space(20);
+            _isHLOD = EditorGUILayout.Toggle("Use HLOD", _isHLOD);
         }
 
         private void SelectPath_Btn_GUI()
-        {
+        { 
+ ;
             GUILayout.BeginVertical();
             GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
             if (GUILayout.Button("Select Save Path", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
@@ -168,6 +174,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 if (selectedPath.StartsWith(Application.dataPath))
                 {
                     SavePath = selectedPath.Replace(Application.dataPath, "Assets");
+                 
                 }
                 else
                 {
@@ -204,7 +211,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
             {
                 foreach (var obj in _objectsToSimplify)
                 {
-                    LODGenerator.Generator(obj, _hSliderValue, SavePath, _isColider);
+                    LODGenerator.Generator(obj, _hSliderValue, SavePath, _isColider,_isHLOD);
                 }
             }
         }
