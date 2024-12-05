@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using Plugins.Auto_LOD_Generator.Editor;
 using Unity.HLODSystem.SpaceManager;
 using Unity.HLODSystem.Utils;
 using UnityEditor;
@@ -9,6 +10,7 @@ using UnityEngine;
 using FileMode = System.IO.FileMode;
 using Object = UnityEngine.Object;
 using UnityEngine.Experimental.Rendering;
+
 
 namespace Unity.HLODSystem.Streaming
 {
@@ -340,8 +342,9 @@ namespace Unity.HLODSystem.Streaming
 #region Setup default values
             if (options.OutputDirectory == null)
             {
-                string path = Application.dataPath;
-                path = "Assets" + path.Substring(Application.dataPath.Length);
+                LODGroupWindow  window = EditorWindow.GetWindow<LODGroupWindow>();
+                string path = window.SavePath;
+               // path = "Assets" + path.Substring(Application.dataPath.Length);
                 path = path.Replace('\\', '/');
                 if (path.EndsWith("/") == false)
                     path += "/";

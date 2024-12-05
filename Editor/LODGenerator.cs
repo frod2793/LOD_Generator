@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Unity.HLODSystem;
+using Unity.HLODSystem.Streaming;
+using Unity.HLODSystem.Utils;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -13,13 +15,21 @@ namespace Plugins.Auto_LOD_Generator.Editor
         //lod 그룹에 포함되지않는  오브젝트  1개 생성
         public static void Generator([JetBrains.Annotations.NotNull] GameObject originalObject, float qualityFactor, string path,bool isColider,bool isHLOD)
         {
+            if (!Equals(Camera.main,null))
+            {
+                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(),null))
+                {
+                    Camera.main.gameObject.AddComponent<HLODCameraRecognizer>();
+                }
+            }
+           
             const int count = 4;
 
-            if (originalObject == null) throw new ArgumentNullException(nameof(originalObject));
+            if (Equals(originalObject , null)) throw new ArgumentNullException(nameof(originalObject));
 
             var newParent = new GameObject(originalObject.name + " LOD Group");
             newParent.AddComponent<LODGroup>();
-
+            
             var lods = new LOD[count]; 
 
             var qualityFactors = new List<float>()
@@ -33,8 +43,34 @@ namespace Plugins.Auto_LOD_Generator.Editor
             if (isHLOD)
             {
                 var NewHLOD = new GameObject(originalObject.name + " HLOD");
+              
+
+                newParent.transform.SetParent(NewHLOD.transform);
+                for (var i = 0; i < count; i++)
+                {
+                    var newGameObj = Instantiate(originalObject, newParent.transform);
+                    newGameObj.name = originalObject.name + "_LOD" + i;
+
+                    ProcessGameObject(newGameObj, i == 0 ? 1 : qualityFactor * qualityFactors[i - 1],
+                        originalObject.name + "_LOD" + i, path);
+
+                    var renderers = newGameObj.GetComponentsInChildren<Renderer>();
+
+                    lods[i] = new LOD(0.5F / (i + 1), renderers);
+
+                    if (i == 0 && isColider)
+                    {
+                        var newGameObj_col = Instantiate(originalObject, newParent.transform);
+                        newGameObj_col.name = originalObject.name + "_Colider";
+                        ProcessGameObject_col(newGameObj_col);
+                    }
+                }
+
+                newParent.GetComponent<LODGroup>().SetLODs(lods);
+                newParent.GetComponent<LODGroup>().RecalculateBounds();
+                NewHLOD.transform.SetParent(originalObject.transform.parent);
                 NewHLOD.AddComponent<HLOD>();
-                
+             
             }
             else
             {

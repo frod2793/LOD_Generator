@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing.Printing;
 using System.Linq;
 using Unity.HLODSystem.SpaceManager;
 using Unity.HLODSystem.Utils;
@@ -57,6 +58,8 @@ namespace Unity.HLODSystem
         private bool isShowUserDataSerializer = true;
 
         private bool isFirstOnGUI = true;
+
+        private bool isCreate = false;
         
         private ISpaceSplitter m_splitter;
 
@@ -69,7 +72,6 @@ namespace Unity.HLODSystem
                 Tools.lockedLayers |= 1 << LayerMask.NameToLayer(HLOD.HLODLayerStr);
             }
         }
-
         void OnEnable()
         {            
             m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
@@ -97,6 +99,8 @@ namespace Unity.HLODSystem
             m_UserDataSerializerNames = m_UserDataSerializerTypes.Select(t => t.Name).ToArray();
 
             isFirstOnGUI = true;
+        
+         
         }
 
         public override void OnInspectorGUI()
@@ -320,12 +324,17 @@ namespace Unity.HLODSystem
             }
 
             GUI.enabled = true;
-
             
             serializedObject.ApplyModifiedProperties();
             isFirstOnGUI = false;
+            
+          
         }
-
+        public void GenerateHLOD()
+        {
+            HLOD hlod = target as HLOD;
+            CoroutineRunner.RunCoroutine(HLODCreator.Create(hlod));
+        }
     }
 
 }
