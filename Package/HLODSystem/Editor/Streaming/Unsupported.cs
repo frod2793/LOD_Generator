@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using Unity.HLODSystem.SpaceManager;
@@ -337,11 +337,17 @@ namespace Unity.HLODSystem.Streaming
         {
             
             dynamic options = streamingOptions;
+
 #region Setup default values
             if (options.OutputDirectory == null)
             {
-                string path = Application.dataPath;
-                path = "Assets" + path.Substring(Application.dataPath.Length);
+                HLODEditor hlodEditor = new HLODEditor();
+             
+                
+               // string path = Application.dataPath;
+              //  path = "Assets" + path.Substring(Application.dataPath.Length);
+                string path = hlodEditor.GetLocalDirectory();
+                Debug.Log(path);
                 path = path.Replace('\\', '/');
                 if (path.EndsWith("/") == false)
                     path += "/";
@@ -383,7 +389,6 @@ namespace Unity.HLODSystem.Streaming
                     if (selectPath.EndsWith("/") == false)
                         selectPath += "/";
                     options.OutputDirectory = selectPath;
-                    //todo: 폴더 위치 변경 시 기존에 생성된 파일들도 이동해야함
                 }
                 else
                 {

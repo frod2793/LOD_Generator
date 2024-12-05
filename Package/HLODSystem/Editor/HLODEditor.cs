@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing.Printing;
 using System.Linq;
 using Unity.HLODSystem.SpaceManager;
 using Unity.HLODSystem.Utils;
@@ -57,6 +58,11 @@ namespace Unity.HLODSystem
         private bool isShowUserDataSerializer = true;
 
         private bool isFirstOnGUI = true;
+
+        
+        HLOD hlod ;
+        
+        public static string SavePath = null;
         
         private ISpaceSplitter m_splitter;
 
@@ -69,7 +75,6 @@ namespace Unity.HLODSystem
                 Tools.lockedLayers |= 1 << LayerMask.NameToLayer(HLOD.HLODLayerStr);
             }
         }
-
         void OnEnable()
         {            
             m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
@@ -97,6 +102,8 @@ namespace Unity.HLODSystem
             m_UserDataSerializerNames = m_UserDataSerializerTypes.Select(t => t.Name).ToArray();
 
             isFirstOnGUI = true;
+        
+         
         }
 
         public override void OnInspectorGUI()
@@ -104,7 +111,7 @@ namespace Unity.HLODSystem
             serializedObject.Update();
             EditorGUI.BeginChangeCheck();
 
-            HLOD hlod = target as HLOD;
+             hlod = target as HLOD;
             if (hlod == null)
             {
                 EditorGUILayout.LabelField("HLOD is null.");
@@ -298,8 +305,6 @@ namespace Unity.HLODSystem
                 destroyButton = Styles.DestroyButtonEnable;
             }
 
-
-
             EditorGUILayout.Space();
 
             GUI.enabled = generateButton == Styles.GenerateButtonEnable;
@@ -320,12 +325,49 @@ namespace Unity.HLODSystem
             }
 
             GUI.enabled = true;
-
             
             serializedObject.ApplyModifiedProperties();
             isFirstOnGUI = false;
+            
+          
+        }
+        public void GenerateHLOD()
+        {
+        //    hlod = target as HLOD;
+            
+        OnInspectorGUI();
+        
+            CoroutineRunner.RunCoroutine(HLODCreator.Create(hlod));
         }
 
+
+        public void AddHlodComponent(GameObject Target)
+        {
+            Target.AddComponent<HLOD>();
+        }
+
+
+        public void GetCameraHlodCameraRecognizer()
+        {
+            if (!Equals(Camera.main,null))
+            {
+                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(),null))
+                {
+                    Camera.main.gameObject.AddComponent<HLODCameraRecognizer>();
+                }
+            }
+        }
+        
+        public void SetLoclDirectory(string path)
+        { 
+            SavePath = path;
+        }
+
+
+        public string GetLocalDirectory()
+        {
+            return SavePath;
+        }
     }
 
 }

@@ -99,7 +99,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
                         }
                     }
                 }
-
                 Event.current.Use();
             }
         }
@@ -165,7 +164,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
         private void SelectPath_Btn_GUI()
         { 
- ;
             GUILayout.BeginVertical();
             GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
             if (GUILayout.Button("Select Save Path", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
@@ -174,14 +172,12 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 if (selectedPath.StartsWith(Application.dataPath))
                 {
                     SavePath = selectedPath.Replace(Application.dataPath, "Assets");
-                 
                 }
                 else
                 {
                     Debug.LogError("The selected path must be within the Assets directory.");
                 }
             }
-
             SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f),
                 GUILayout.Width(position.width - minuswidth));
         }
