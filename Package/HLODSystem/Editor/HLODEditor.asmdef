@@ -3,8 +3,7 @@
     "rootNamespace": "",
     "references": [
         "UnityMeshSimplifier",
-        "HLOD",
-        "frod.LOD_Generator.Editor"
+        "HLOD"
     ],
     "includePlatforms": [
         "Editor"

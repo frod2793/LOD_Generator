@@ -59,7 +59,10 @@ namespace Unity.HLODSystem
 
         private bool isFirstOnGUI = true;
 
-        private bool isCreate = false;
+        
+        HLOD hlod ;
+        
+        public static string SavePath = null;
         
         private ISpaceSplitter m_splitter;
 
@@ -108,7 +111,7 @@ namespace Unity.HLODSystem
             serializedObject.Update();
             EditorGUI.BeginChangeCheck();
 
-            HLOD hlod = target as HLOD;
+             hlod = target as HLOD;
             if (hlod == null)
             {
                 EditorGUILayout.LabelField("HLOD is null.");
@@ -302,8 +305,6 @@ namespace Unity.HLODSystem
                 destroyButton = Styles.DestroyButtonEnable;
             }
 
-
-
             EditorGUILayout.Space();
 
             GUI.enabled = generateButton == Styles.GenerateButtonEnable;
@@ -332,8 +333,40 @@ namespace Unity.HLODSystem
         }
         public void GenerateHLOD()
         {
-            HLOD hlod = target as HLOD;
+        //    hlod = target as HLOD;
+            
+        OnInspectorGUI();
+        
             CoroutineRunner.RunCoroutine(HLODCreator.Create(hlod));
+        }
+
+
+        public void AddHlodComponent(GameObject Target)
+        {
+            Target.AddComponent<HLOD>();
+        }
+
+
+        public void GetCameraHlodCameraRecognizer()
+        {
+            if (!Equals(Camera.main,null))
+            {
+                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(),null))
+                {
+                    Camera.main.gameObject.AddComponent<HLODCameraRecognizer>();
+                }
+            }
+        }
+        
+        public void SetLoclDirectory(string path)
+        { 
+            SavePath = path;
+        }
+
+
+        public string GetLocalDirectory()
+        {
+            return SavePath;
         }
     }
 

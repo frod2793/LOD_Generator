@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Unity.HLODSystem;
@@ -15,14 +16,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
         //lod 그룹에 포함되지않는  오브젝트  1개 생성
         public static void Generator([JetBrains.Annotations.NotNull] GameObject originalObject, float qualityFactor, string path,bool isColider,bool isHLOD)
         {
-            if (!Equals(Camera.main,null))
-            {
-                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(),null))
-                {
-                    Camera.main.gameObject.AddComponent<HLODCameraRecognizer>();
-                }
-            }
-           
             const int count = 4;
 
             if (Equals(originalObject , null)) throw new ArgumentNullException(nameof(originalObject));
@@ -43,8 +36,12 @@ namespace Plugins.Auto_LOD_Generator.Editor
             if (isHLOD)
             {
                 var NewHLOD = new GameObject(originalObject.name + " HLOD");
-              
-
+                
+                HLODEditor hlodEditor = new HLODEditor();
+                 
+                hlodEditor.AddHlodComponent(NewHLOD);
+                hlodEditor.GetCameraHlodCameraRecognizer();
+             
                 newParent.transform.SetParent(NewHLOD.transform);
                 for (var i = 0; i < count; i++)
                 {
@@ -69,7 +66,10 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 newParent.GetComponent<LODGroup>().SetLODs(lods);
                 newParent.GetComponent<LODGroup>().RecalculateBounds();
                 NewHLOD.transform.SetParent(originalObject.transform.parent);
-                NewHLOD.AddComponent<HLOD>();
+           
+                hlodEditor.SetLoclDirectory(path);
+                
+                hlodEditor.GenerateHLOD();
              
             }
             else
@@ -99,10 +99,11 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 newParent.transform.SetParent(originalObject.transform.parent);
             }
             
-            
-           
         }
 
+  
+        
+        
         private static void ProcessGameObject(GameObject gameObject, float qualityFactor, string name, string path)
         {
             var meshFilter = gameObject.GetComponent<MeshFilter>();

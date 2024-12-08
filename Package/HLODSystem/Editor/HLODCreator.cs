@@ -175,6 +175,8 @@ namespace Unity.HLODSystem
         {
             try
             {
+                yield return new WaitUntil(() => hlod != null);
+                
                 Stopwatch sw = new Stopwatch();
 
                 AssetDatabase.Refresh();
