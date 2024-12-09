@@ -134,7 +134,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
                     // _objectsToHLOD 리스트에 있는 각 오브젝트에 대해 HLOD 생성
                     foreach (var obj in _objectsToHLOD)
                     {
-                        // Start a coroutine to generate HLOD with a delay
                         CoroutineRunner.RunCoroutine(GenerateHLODWithDelay(hlodEditor, obj));
                     }
                 }

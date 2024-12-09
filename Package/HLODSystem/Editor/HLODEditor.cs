@@ -375,16 +375,44 @@ namespace Unity.HLODSystem
         {
            HLOD _hlod =  hlod.GetComponent<HLOD>();
            
-           if (m_splitter == null)
-           {
-               m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
-           }
+           // if (m_splitter == null)
+           // {
+           //     m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+           // }
+           //
+           // if (m_splitter != null)
+           // {
+           //     int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+           //     EditorGUILayout.LabelField($"The HLOD tree will be created with {subTreeCount} sub trees.",
+           //         Styles.BlueTextColor);
+           // }
+           m_SpaceSplitterTypes = SpaceManager.SpaceSplitterTypes.GetTypes();
+           m_SpaceSplitterNames = m_SpaceSplitterTypes.Select(t => t.Name).ToArray();
            
-           if (m_splitter != null)
+           if (m_SpaceSplitterTypes.Length > 0)
            {
-               int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
-               EditorGUILayout.LabelField($"The HLOD tree will be created with {subTreeCount} sub trees.",
-                   Styles.BlueTextColor);
+               int spaceSplitterIndex = Math.Max(Array.IndexOf(m_SpaceSplitterTypes, _hlod.SpaceSplitterType), 0);
+               spaceSplitterIndex = 0;
+               _hlod.SpaceSplitterType = m_SpaceSplitterTypes[spaceSplitterIndex];
+
+               // var info = m_SpaceSplitterTypes[spaceSplitterIndex].GetMethod("OnGUI");
+               // if (info != null)
+               // {
+               //     if ( info.IsStatic == true )
+               //     {
+               //         info.Invoke(null, new object[] { _hlod.SpaceSplitterOptions });
+               //     }
+               // }
+            
+               m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+               
+
+               if (m_splitter != null)
+               {
+                   int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+         
+               }
+
            }
            CoroutineRunner.RunCoroutine(HLODCreator.Create(_hlod));
         }

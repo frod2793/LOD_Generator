@@ -28,7 +28,7 @@ namespace Unity.HLODSystem.SpaceManager
         {
             if (s_Types.IndexOf(hlod.SpaceSplitterType) < 0)
             {
-                Debug.LogError("SpaceSplitter Type is not registered");
+            
                 return null;
             }
             

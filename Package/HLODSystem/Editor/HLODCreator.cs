@@ -180,36 +180,26 @@ namespace Unity.HLODSystem
             {
                 isCreating = true;
                 yield return new WaitUntil(() => !Equals(hlod,null));
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 Stopwatch sw = new Stopwatch();
 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 AssetDatabase.Refresh();
                 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 AssetDatabase.SaveAssets();
 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 sw.Reset();
                 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 sw.Start();
                 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 hlod.ConvertedPrefabObjects.Clear();
                 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 hlod.GeneratedObjects.Clear();
 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 Bounds bounds = hlod.GetBounds();
 
-                Debug.Log("[HLOD] hlod: " + hlod == null);
                 List<GameObject> hlodTargets = ObjectUtils.HLODTargets(hlod.gameObject);
                 
                 ISpaceSplitter spliter = SpaceSplitterTypes.CreateInstance(hlod);
                 
-                Debug.Log("[HLOD] spliter: " + spliter == null);
                // yield return new WaitUntil(() => spliter != null);
 
 
@@ -217,7 +207,6 @@ namespace Unity.HLODSystem
                {
                    spliter = SpaceSplitterTypes.CreateInstance(hlod);
                    
-                   Debug.Log("[HLOD] spliter: " + spliter == null);
                }
                
                 if (spliter == null)
