@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Drawing.Printing;
+using System.Collections.Generic;
 using System.Linq;
+using NUnit.Framework;
 using Unity.HLODSystem.SpaceManager;
 using Unity.HLODSystem.Utils;
 using UnityEditor;
@@ -58,11 +59,8 @@ namespace Unity.HLODSystem
         private bool isShowUserDataSerializer = true;
 
         private bool isFirstOnGUI = true;
-
         
-        HLOD hlod ;
-        
-        public static string SavePath = null;
+        public static string SavePath = "Assets/";
         
         private ISpaceSplitter m_splitter;
 
@@ -75,6 +73,7 @@ namespace Unity.HLODSystem
                 Tools.lockedLayers |= 1 << LayerMask.NameToLayer(HLOD.HLODLayerStr);
             }
         }
+
         void OnEnable()
         {            
             m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
@@ -102,8 +101,6 @@ namespace Unity.HLODSystem
             m_UserDataSerializerNames = m_UserDataSerializerTypes.Select(t => t.Name).ToArray();
 
             isFirstOnGUI = true;
-        
-         
         }
 
         public override void OnInspectorGUI()
@@ -111,7 +108,7 @@ namespace Unity.HLODSystem
             serializedObject.Update();
             EditorGUI.BeginChangeCheck();
 
-             hlod = target as HLOD;
+            HLOD hlod = target as HLOD;
             if (hlod == null)
             {
                 EditorGUILayout.LabelField("HLOD is null.");
@@ -305,6 +302,8 @@ namespace Unity.HLODSystem
                 destroyButton = Styles.DestroyButtonEnable;
             }
 
+
+
             EditorGUILayout.Space();
 
             GUI.enabled = generateButton == Styles.GenerateButtonEnable;
@@ -325,22 +324,12 @@ namespace Unity.HLODSystem
             }
 
             GUI.enabled = true;
+
             
             serializedObject.ApplyModifiedProperties();
             isFirstOnGUI = false;
-            
-          
         }
-        public void GenerateHLOD()
-        {
-        //    hlod = target as HLOD;
-            
-        OnInspectorGUI();
-        
-            CoroutineRunner.RunCoroutine(HLODCreator.Create(hlod));
-        }
-
-
+      
         public void AddHlodComponent(GameObject Target)
         {
             Target.AddComponent<HLOD>();
@@ -368,6 +357,39 @@ namespace Unity.HLODSystem
         {
             return SavePath;
         }
-    }
+        
+        public List<GameObject> GetHLOD_GameObjects()
+        {
+            
+            List<GameObject> objectsToSimplify = new List<GameObject>();
+            var hlodObjects = GameObject.FindObjectsOfType<HLOD>();
+            foreach (var hlodObject in hlodObjects)
+            {
+                objectsToSimplify.Add(hlodObject.gameObject);
+            }
+    
+            return objectsToSimplify;
+        }
 
+        public void GenerateHLOD( GameObject hlod)
+        {
+           HLOD _hlod =  hlod.GetComponent<HLOD>();
+           
+           if (m_splitter == null)
+           {
+               m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+           }
+           
+           if (m_splitter != null)
+           {
+               int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+               EditorGUILayout.LabelField($"The HLOD tree will be created with {subTreeCount} sub trees.",
+                   Styles.BlueTextColor);
+           }
+           CoroutineRunner.RunCoroutine(HLODCreator.Create(_hlod));
+        }
+        
+        
+    }
+ 
 }

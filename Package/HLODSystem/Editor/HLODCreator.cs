@@ -18,6 +18,9 @@ namespace Unity.HLODSystem
 {
     public static class HLODCreator
     {
+
+        public static bool isCreating;
+        
         private static List<Collider> GetColliders(List<GameObject> gameObjects, float minObjectSize)
         {
             List<Collider> results = new List<Collider>();
@@ -175,28 +178,56 @@ namespace Unity.HLODSystem
         {
             try
             {
-                yield return new WaitUntil(() => hlod != null);
-                
+                isCreating = true;
+                yield return new WaitUntil(() => !Equals(hlod,null));
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 Stopwatch sw = new Stopwatch();
 
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 AssetDatabase.Refresh();
+                
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 AssetDatabase.SaveAssets();
 
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 sw.Reset();
+                
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 sw.Start();
                 
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 hlod.ConvertedPrefabObjects.Clear();
+                
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 hlod.GeneratedObjects.Clear();
 
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 Bounds bounds = hlod.GetBounds();
 
+                Debug.Log("[HLOD] hlod: " + hlod == null);
                 List<GameObject> hlodTargets = ObjectUtils.HLODTargets(hlod.gameObject);
+                
                 ISpaceSplitter spliter = SpaceSplitterTypes.CreateInstance(hlod);
+                
+                Debug.Log("[HLOD] spliter: " + spliter == null);
+               // yield return new WaitUntil(() => spliter != null);
+
+
+               if (spliter == null)
+               {
+                   spliter = SpaceSplitterTypes.CreateInstance(hlod);
+                   
+                   Debug.Log("[HLOD] spliter: " + spliter == null);
+               }
+               
                 if (spliter == null)
                 {
+                   
+                    
                     EditorUtility.DisplayDialog("SpaceSplitter not found",
                         "There is no SpaceSplitter. Please set the SpaceSplitter.",
                         "OK");
+                    isCreating = false;
                     yield break;
                     
                 }
@@ -302,7 +333,7 @@ namespace Unity.HLODSystem
                 UserDataSerialization(hlod);
                 EditorUtility.SetDirty(hlod);
                 EditorUtility.SetDirty(hlod.gameObject);
-
+                isCreating = false;
             }
             finally
             {
