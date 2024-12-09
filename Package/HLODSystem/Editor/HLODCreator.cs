@@ -18,6 +18,9 @@ namespace Unity.HLODSystem
 {
     public static class HLODCreator
     {
+
+        public static bool isCreating;
+        
         private static List<Collider> GetColliders(List<GameObject> gameObjects, float minObjectSize)
         {
             List<Collider> results = new List<Collider>();
@@ -175,28 +178,45 @@ namespace Unity.HLODSystem
         {
             try
             {
-                yield return new WaitUntil(() => hlod != null);
-                
+                isCreating = true;
+                yield return new WaitUntil(() => !Equals(hlod,null));
                 Stopwatch sw = new Stopwatch();
 
                 AssetDatabase.Refresh();
+                
                 AssetDatabase.SaveAssets();
 
                 sw.Reset();
+                
                 sw.Start();
                 
                 hlod.ConvertedPrefabObjects.Clear();
+                
                 hlod.GeneratedObjects.Clear();
 
                 Bounds bounds = hlod.GetBounds();
 
                 List<GameObject> hlodTargets = ObjectUtils.HLODTargets(hlod.gameObject);
+                
                 ISpaceSplitter spliter = SpaceSplitterTypes.CreateInstance(hlod);
+                
+               // yield return new WaitUntil(() => spliter != null);
+
+
+               if (spliter == null)
+               {
+                   spliter = SpaceSplitterTypes.CreateInstance(hlod);
+                   
+               }
+               
                 if (spliter == null)
                 {
+                   
+                    
                     EditorUtility.DisplayDialog("SpaceSplitter not found",
                         "There is no SpaceSplitter. Please set the SpaceSplitter.",
                         "OK");
+                    isCreating = false;
                     yield break;
                     
                 }
@@ -302,7 +322,7 @@ namespace Unity.HLODSystem
                 UserDataSerialization(hlod);
                 EditorUtility.SetDirty(hlod);
                 EditorUtility.SetDirty(hlod.gameObject);
-
+                isCreating = false;
             }
             finally
             {

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Unity.HLODSystem;
-using Unity.HLODSystem.Streaming;
-using Unity.HLODSystem.Utils;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -62,15 +58,11 @@ namespace Plugins.Auto_LOD_Generator.Editor
                         ProcessGameObject_col(newGameObj_col);
                     }
                 }
-
                 newParent.GetComponent<LODGroup>().SetLODs(lods);
                 newParent.GetComponent<LODGroup>().RecalculateBounds();
                 NewHLOD.transform.SetParent(originalObject.transform.parent);
            
                 hlodEditor.SetLoclDirectory(path);
-                
-                hlodEditor.GenerateHLOD();
-             
             }
             else
             {

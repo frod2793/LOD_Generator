@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
-using Plugins.Auto_LOD_Generator.Editor;
 using Unity.HLODSystem;
+using Unity.HLODSystem.Utils;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private float _hSliderValue;
         private string _objPath;
         private List<GameObject> _objectsToSimplify;
+        private List<GameObject> _objectsToHLOD;
         private ReorderableList _reorderableList;
         private const string _iconPath = "Assets/LOD_Generator/Editor/icon.png";
 
@@ -71,6 +73,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
             Drag_And_Drop_GUI();
 
+            GetHLOD_GameObjects();
+            
             GUILayout.EndVertical();
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
@@ -103,6 +107,50 @@ namespace Plugins.Auto_LOD_Generator.Editor
             }
         }
 
+        
+        private void GetHLOD_GameObjects()
+        {
+            HLODEditor hlodEditor = CreateInstance<HLODEditor>();
+
+            if (GUILayout.Button("get HLOD obj", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+            {
+                _objectsToHLOD = hlodEditor.GetHLOD_GameObjects();
+            }
+
+            // 가져온 HLOD 오브젝트들을 리스트 보여주기
+            if (_objectsToHLOD != null)
+            {
+                foreach (var obj in _objectsToHLOD)
+                {
+                    EditorGUILayout.ObjectField(obj, typeof(GameObject), true);
+                }
+            }
+
+            if (GUILayout.Button("GenerateHLod", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+            {
+                // _objectsToHLOD 리스트가 null이 아니고, 오브젝트가 하나 이상 있는지 확인
+                if (_objectsToHLOD != null && _objectsToHLOD.Count > 0)
+                {
+                    // _objectsToHLOD 리스트에 있는 각 오브젝트에 대해 HLOD 생성
+                    foreach (var obj in _objectsToHLOD)
+                    {
+                        CoroutineRunner.RunCoroutine(GenerateHLODWithDelay(hlodEditor, obj));
+                    }
+                }
+                else
+                {
+                    // HLOD 오브젝트가 없을 경우 에러 메시지 출력
+                    Debug.LogError("No HLOD objects to generate.");
+                }
+            }
+
+           
+        }
+        private IEnumerator GenerateHLODWithDelay(HLODEditor hlodEditor, GameObject obj)
+        {
+            yield return new WaitUntil(() => HLODCreator.isCreating == false); // HLOD 생성이 완료될 때까지 대기
+            hlodEditor.GenerateHLOD(obj); // HLOD 오브젝트 생성
+        }
         private void List_Clear_Btn_GUI()
         {
             GUILayout.Space(20);
@@ -110,6 +158,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
             {
                 _objectsToSimplify.Clear();
                 _objectSelected = false;
+                 
+                _objectsToHLOD.Clear();
             }
         }
 
