@@ -148,8 +148,9 @@ namespace Plugins.Auto_LOD_Generator.Editor
         }
         private IEnumerator GenerateHLODWithDelay(HLODEditor hlodEditor, GameObject obj)
         {
-            yield return new WaitUntil(() => HLODCreator.isCreating == false); // HLOD 생성이 완료될 때까지 대기
+         
             hlodEditor.GenerateHLOD(obj); // HLOD 오브젝트 생성
+            yield return new WaitUntil(() => HLODCreator.isCreating == false); // HLOD 생성이 완료될 때까지 대기
         }
         private void List_Clear_Btn_GUI()
         {
@@ -158,8 +159,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
             {
                 _objectsToSimplify.Clear();
                 _objectSelected = false;
-                 
-                _objectsToHLOD.Clear();
+                 if(_objectsToHLOD != null)
+                    _objectsToHLOD.Clear();
             }
         }
 

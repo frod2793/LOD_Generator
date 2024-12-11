@@ -325,7 +325,8 @@ namespace Unity.HLODSystem
                 isCreating = false;
             }
             finally
-            {
+            { 
+                isCreating = true;
                 EditorUtility.ClearProgressBar();
                 
             }
