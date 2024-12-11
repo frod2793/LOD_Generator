@@ -410,6 +410,64 @@ namespace Unity.HLODSystem.Streaming
 
         }
 
+
+        public static void OnOneGUI(SerializableDynamicObject streamingOptions)
+        {
+            dynamic options = streamingOptions;
+
+            #region Setup default values
+
+            if (options.OutputDirectory == null)
+            {
+                HLODEditor hlodEditor = new HLODEditor();
+
+
+                // string path = Application.dataPath;
+                //  path = "Assets" + path.Substring(Application.dataPath.Length);
+                string path = hlodEditor.GetLocalDirectory();
+                Debug.Log(path);
+                path = path.Replace('\\', '/');
+                if (path.EndsWith("/") == false)
+                    path += "/";
+                options.OutputDirectory = path;
+            }
+
+            if (options.PCCompression == null)
+            {
+                options.PCCompression = TextureFormat.BC7;
+            }
+
+            if (options.WebGLCompression == null)
+            {
+                options.WebGLCompression = TextureFormat.DXT5;
+            }
+
+            if (options.AndroidCompression == null)
+            {
+                options.AndroidCompression = TextureFormat.ETC2_RGBA8;
+            }
+
+            if (options.iOSCompression == null)
+            {
+                options.iOSCompression = TextureFormat.PVRTC_RGBA4;
+            }
+
+            if (options.tvOSCompression == null)
+            {
+                options.tvOSCompression = TextureFormat.ASTC_4x4;
+            }
+
+            #endregion
+
+
+            // options.PCCompression = PopupFormat("PC & Console", (TextureFormat)options.PCCompression);
+            // options.WebGLCompression = PopupFormat("WebGL", (TextureFormat)options.WebGLCompression);
+            // options.AndroidCompression = PopupFormat("Android", (TextureFormat)options.AndroidCompression);
+            // options.iOSCompression = PopupFormat("iOS", (TextureFormat)options.iOSCompression);
+            // options.tvOSCompression = PopupFormat("tvOS", (TextureFormat)options.tvOSCompression);
+        }
+        
+        
         private static TextureFormat PopupFormat(string label, TextureFormat format)
         {
             int selectIndex = Array.IndexOf(Styles.SupportTextureFormats, format);

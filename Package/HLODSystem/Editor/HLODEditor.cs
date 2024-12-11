@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using Unity.HLODSystem.Simplifier;
 using Unity.HLODSystem.SpaceManager;
 using Unity.HLODSystem.Utils;
 using UnityEditor;
@@ -17,7 +18,9 @@ namespace Unity.HLODSystem
             public static GUIContent GenerateButtonEnable = new GUIContent("Generate", "Generate HLOD mesh.");
             public static GUIContent GenerateButtonExists = new GUIContent("Generate", "HLOD already generated.");
             public static GUIContent DestroyButtonEnable = new GUIContent("Destroy", "Destroy HLOD mesh.");
-            public static GUIContent DestroyButtonNotExists = new GUIContent("Destroy", "HLOD must be created before the destroying.");
+
+            public static GUIContent DestroyButtonNotExists =
+                new GUIContent("Destroy", "HLOD must be created before the destroying.");
 
             public static GUIStyle RedTextColor = new GUIStyle();
             public static GUIStyle BlueTextColor = new GUIStyle();
@@ -27,8 +30,8 @@ namespace Unity.HLODSystem
                 RedTextColor.normal.textColor = Color.red;
                 BlueTextColor.normal.textColor = new Color(0.4f, 0.5f, 1.0f);
             }
+        }
 
-        }        
         private SerializedProperty m_ChunkSizeProperty;
         private SerializedProperty m_LODDistanceProperty;
         private SerializedProperty m_CullDistanceProperty;
@@ -59,9 +62,9 @@ namespace Unity.HLODSystem
         private bool isShowUserDataSerializer = true;
 
         private bool isFirstOnGUI = true;
-        
+
         public static string SavePath = "Assets/";
-        
+
         private ISpaceSplitter m_splitter;
 
         [InitializeOnLoadMethod]
@@ -75,7 +78,7 @@ namespace Unity.HLODSystem
         }
 
         void OnEnable()
-        {            
+        {
             m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
             m_LODDistanceProperty = serializedObject.FindProperty("m_LODDistance");
             m_CullDistanceProperty = serializedObject.FindProperty("m_CullDistance");
@@ -114,6 +117,7 @@ namespace Unity.HLODSystem
                 EditorGUILayout.LabelField("HLOD is null.");
                 return;
             }
+
             if (m_splitter == null)
             {
                 m_splitter = SpaceSplitterTypes.CreateInstance(hlod);
@@ -131,19 +135,20 @@ namespace Unity.HLODSystem
                     var bounds = hlod.GetBounds();
                     int depth = m_splitter.CalculateTreeDepth(bounds, m_ChunkSizeProperty.floatValue);
 
-                    EditorGUILayout.LabelField($"The HLOD tree will be created with {depth} levels.", Styles.BlueTextColor);
+                    EditorGUILayout.LabelField($"The HLOD tree will be created with {depth} levels.",
+                        Styles.BlueTextColor);
                     if (depth > 5)
                     {
                         EditorGUILayout.LabelField($"Node Level Count greater than 5 may cause a frozen Editor.",
                             Styles.RedTextColor);
                         EditorGUILayout.LabelField($"I recommend keeping the level under 5.", Styles.RedTextColor);
-
                     }
                 }
 
                 m_LODSlider.Draw();
                 EditorGUILayout.PropertyField(m_MinObjectSizeProperty);
             }
+
             EditorGUILayout.EndFoldoutHeaderGroup();
 
             isShowSpaceSplitter = EditorGUILayout.BeginFoldoutHeaderGroup(isShowSpaceSplitter, "SpaceSplitter");
@@ -153,15 +158,16 @@ namespace Unity.HLODSystem
                 if (m_SpaceSplitterTypes.Length > 0)
                 {
                     EditorGUI.BeginChangeCheck();
-                    
+
                     int spaceSplitterIndex = Math.Max(Array.IndexOf(m_SpaceSplitterTypes, hlod.SpaceSplitterType), 0);
-                    spaceSplitterIndex = EditorGUILayout.Popup("SpaceSplitter", spaceSplitterIndex, m_SpaceSplitterNames);
+                    spaceSplitterIndex =
+                        EditorGUILayout.Popup("SpaceSplitter", spaceSplitterIndex, m_SpaceSplitterNames);
                     hlod.SpaceSplitterType = m_SpaceSplitterTypes[spaceSplitterIndex];
 
                     var info = m_SpaceSplitterTypes[spaceSplitterIndex].GetMethod("OnGUI");
                     if (info != null)
                     {
-                        if ( info.IsStatic == true )
+                        if (info.IsStatic == true)
                         {
                             info.Invoke(null, new object[] { hlod.SpaceSplitterOptions });
                         }
@@ -178,14 +184,15 @@ namespace Unity.HLODSystem
                         EditorGUILayout.LabelField($"The HLOD tree will be created with {subTreeCount} sub trees.",
                             Styles.BlueTextColor);
                     }
-
                 }
                 else
                 {
                     EditorGUILayout.LabelField("Cannot find SpaceSplitters.");
                 }
+
                 EditorGUI.indentLevel -= 1;
             }
+
             EditorGUILayout.EndFoldoutHeaderGroup();
 
             isShowSimplifier = EditorGUILayout.BeginFoldoutHeaderGroup(isShowSimplifier, "Simplifier");
@@ -203,7 +210,7 @@ namespace Unity.HLODSystem
                     {
                         if (info.IsStatic == true)
                         {
-                            info.Invoke(null, new object[] {hlod.SimplifierOptions});
+                            info.Invoke(null, new object[] { hlod.SimplifierOptions });
                         }
                     }
                 }
@@ -211,8 +218,10 @@ namespace Unity.HLODSystem
                 {
                     EditorGUILayout.LabelField("Cannot find Simplifiers.");
                 }
+
                 EditorGUI.indentLevel -= 1;
             }
+
             EditorGUILayout.EndFoldoutHeaderGroup();
 
             isShowBatcher = EditorGUILayout.BeginFoldoutHeaderGroup(isShowBatcher, "Batcher");
@@ -230,7 +239,7 @@ namespace Unity.HLODSystem
                     {
                         if (info.IsStatic == true)
                         {
-                            info.Invoke(null, new object[] {hlod, isFirstOnGUI });
+                            info.Invoke(null, new object[] { hlod, isFirstOnGUI });
                         }
                     }
                 }
@@ -238,10 +247,12 @@ namespace Unity.HLODSystem
                 {
                     EditorGUILayout.LabelField("Cannot find Batchers.");
                 }
+
                 EditorGUI.indentLevel -= 1;
             }
+
             EditorGUILayout.EndFoldoutHeaderGroup();
-            
+
 
             isShowStreaming = EditorGUILayout.BeginFoldoutHeaderGroup(isShowStreaming, "Streaming");
             if (isShowStreaming == true)
@@ -266,11 +277,13 @@ namespace Unity.HLODSystem
                 {
                     EditorGUILayout.LabelField("Cannot find StreamingSetters.");
                 }
+
                 EditorGUI.indentLevel -= 1;
             }
+
             EditorGUILayout.EndFoldoutHeaderGroup();
-            
-            
+
+
             isShowUserDataSerializer =
                 EditorGUILayout.BeginFoldoutHeaderGroup(isShowUserDataSerializer, "UserData serializer");
             if (isShowUserDataSerializer)
@@ -288,20 +301,21 @@ namespace Unity.HLODSystem
                 {
                     EditorGUILayout.LabelField("Cannot find UserDataSerializer.");
                 }
+
                 EditorGUI.indentLevel -= 1;
             }
+
             EditorGUILayout.EndFoldoutHeaderGroup();
 
 
             GUIContent generateButton = Styles.GenerateButtonEnable;
             GUIContent destroyButton = Styles.DestroyButtonNotExists;
 
-            if (hlod.GeneratedObjects.Count > 0 )
+            if (hlod.GeneratedObjects.Count > 0)
             {
                 generateButton = Styles.GenerateButtonExists;
                 destroyButton = Styles.DestroyButtonEnable;
             }
-
 
 
             EditorGUILayout.Space();
@@ -317,7 +331,7 @@ namespace Unity.HLODSystem
             {
                 CoroutineRunner.RunCoroutine(HLODCreator.Destroy(hlod));
             }
-            
+
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(hlod);
@@ -325,11 +339,11 @@ namespace Unity.HLODSystem
 
             GUI.enabled = true;
 
-            
+
             serializedObject.ApplyModifiedProperties();
             isFirstOnGUI = false;
         }
-      
+
         public void AddHlodComponent(GameObject Target)
         {
             Target.AddComponent<HLOD>();
@@ -338,17 +352,17 @@ namespace Unity.HLODSystem
 
         public void GetCameraHlodCameraRecognizer()
         {
-            if (!Equals(Camera.main,null))
+            if (!Equals(Camera.main, null))
             {
-                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(),null))
+                if (Equals(Camera.main.GetComponent<HLODCameraRecognizer>(), null))
                 {
                     Camera.main.gameObject.AddComponent<HLODCameraRecognizer>();
                 }
             }
         }
-        
+
         public void SetLoclDirectory(string path)
-        { 
+        {
             SavePath = path;
         }
 
@@ -357,67 +371,158 @@ namespace Unity.HLODSystem
         {
             return SavePath;
         }
-        
+
         public List<GameObject> GetHLOD_GameObjects()
         {
-            
             List<GameObject> objectsToSimplify = new List<GameObject>();
             var hlodObjects = GameObject.FindObjectsOfType<HLOD>();
             foreach (var hlodObject in hlodObjects)
             {
                 objectsToSimplify.Add(hlodObject.gameObject);
             }
-    
+
             return objectsToSimplify;
         }
 
-        public void GenerateHLOD( GameObject hlod)
+        public void GenerateHLOD(GameObject hlod)
         {
-           HLOD _hlod =  hlod.GetComponent<HLOD>();
-           
-           // if (m_splitter == null)
-           // {
-           //     m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
-           // }
-           //
-           // if (m_splitter != null)
-           // {
-           //     int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
-           //     EditorGUILayout.LabelField($"The HLOD tree will be created with {subTreeCount} sub trees.",
-           //         Styles.BlueTextColor);
-           // }
-           m_SpaceSplitterTypes = SpaceManager.SpaceSplitterTypes.GetTypes();
-           m_SpaceSplitterNames = m_SpaceSplitterTypes.Select(t => t.Name).ToArray();
-           
-           if (m_SpaceSplitterTypes.Length > 0)
-           {
-               int spaceSplitterIndex = Math.Max(Array.IndexOf(m_SpaceSplitterTypes, _hlod.SpaceSplitterType), 0);
-               spaceSplitterIndex = 0;
-               _hlod.SpaceSplitterType = m_SpaceSplitterTypes[spaceSplitterIndex];
+            HLOD _hlod = hlod.GetComponent<HLOD>();
 
-               // var info = m_SpaceSplitterTypes[spaceSplitterIndex].GetMethod("OnGUI");
-               // if (info != null)
-               // {
-               //     if ( info.IsStatic == true )
-               //     {
-               //         info.Invoke(null, new object[] { _hlod.SpaceSplitterOptions });
-               //     }
-               // }
+            m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
+            m_LODDistanceProperty = serializedObject.FindProperty("m_LODDistance");
+            m_CullDistanceProperty = serializedObject.FindProperty("m_CullDistance");
+            m_MinObjectSizeProperty = serializedObject.FindProperty("m_MinObjectSize");
+
+            m_LODSlider = new LODSlider(true, "Cull");
+            m_LODSlider.InsertRange("High", m_LODDistanceProperty);
+            m_LODSlider.InsertRange("Low", m_CullDistanceProperty);
+
+            m_SpaceSplitterTypes = SpaceManager.SpaceSplitterTypes.GetTypes();
+            m_SpaceSplitterNames = m_SpaceSplitterTypes.Select(t => t.Name).ToArray();
+
+            m_BatcherTypes = BatcherTypes.GetTypes();
+            m_BatcherNames = m_BatcherTypes.Select(t => t.Name).ToArray();
+
+            m_SimplifierTypes = Simplifier.SimplifierTypes.GetTypes();
+            m_SimplifierNames = m_SimplifierTypes.Select(t => t.Name).ToArray();
+
+            m_StreamingTypes = Streaming.StreamingBuilderTypes.GetTypes();
+            m_StreamingNames = m_StreamingTypes.Select(t => t.Name).ToArray();
+
+            m_UserDataSerializerTypes = Serializer.UserDataSerializerTypes.GetTypes();
+            m_UserDataSerializerNames = m_UserDataSerializerTypes.Select(t => t.Name).ToArray();
+
+            isFirstOnGUI = true;
             
-               m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
-               
+            if (m_splitter == null)
+            {
+                m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+            }
 
-               if (m_splitter != null)
-               {
-                   int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
-         
-               }
+                // m_ChunkSizeProperty.floatValue =30;
 
-           }
-           CoroutineRunner.RunCoroutine(HLODCreator.Create(_hlod));
-        }
-        
-        
-    }
+                if (m_splitter != null)
+                {
+                    var bounds = _hlod.GetBounds();
+                    int depth = m_splitter.CalculateTreeDepth(bounds, 30f);
+                }
+
+            if (m_SpaceSplitterTypes.Length > 0)
+            {
+
+                int spaceSplitterIndex = Math.Max(Array.IndexOf(m_SpaceSplitterTypes, _hlod.SpaceSplitterType), 0);
+                spaceSplitterIndex = 0;
+                _hlod.SpaceSplitterType = m_SpaceSplitterTypes[spaceSplitterIndex];
+
+                var info = m_SpaceSplitterTypes[spaceSplitterIndex].GetMethod("OnGUI");
+                if (info != null)
+                {
+                    if (info.IsStatic == true)
+                    {
+                        info.Invoke(null, new object[] { _hlod.SpaceSplitterOptions });
+                    }
+                }
+
+                // if (EditorGUI.EndChangeCheck())
+                // {
+                //     m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
+                // }
+
+                if (m_splitter != null)
+                {
+                    int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+                }
+
+                if (m_splitter != null)
+                {
+                    int subTreeCount = m_splitter.CalculateSubTreeCount(_hlod.GetBounds());
+                }
+            }
+
+           
+                if (m_SimplifierTypes.Length > 0)
+                {
+                    int simplifierIndex = Math.Max(Array.IndexOf(m_SimplifierTypes, _hlod.SimplifierType), 0);
+                    simplifierIndex = 0;
+                    _hlod.SimplifierType = m_SimplifierTypes[simplifierIndex];
+
+                    var info = m_SimplifierTypes[simplifierIndex].GetMethod("OnGUI");
+                    if (info != null)
+                    {
+                        if (info.IsStatic == true)
+                        {
+                            info.Invoke(null, new object[] { _hlod.SimplifierOptions });
+                        }
+                    }
+                }
+            
+
+       
+                if (m_BatcherTypes.Length > 0)
+                {
+                    int batcherIndex = Math.Max(Array.IndexOf(m_BatcherTypes, _hlod.BatcherType), 0);
+                    batcherIndex = 1;
+                    _hlod.BatcherType = m_BatcherTypes[batcherIndex];
+
+                    var info = m_BatcherTypes[batcherIndex].GetMethod("OnGUI");
+                    if (info != null)
+                    {
+                        if (info.IsStatic == true)
+                        {
+                            info.Invoke(null, new object[] { hlod, isFirstOnGUI });
+                        }
+                    }
+                }
+            
+
+            
+                if (m_StreamingTypes.Length > 0)
+                {
+                    int streamingIndex = Math.Max(Array.IndexOf(m_StreamingTypes, _hlod.StreamingType), 0);
+                    streamingIndex = 0;
+                    _hlod.StreamingType = m_StreamingTypes[streamingIndex];
+
+                    var info = m_StreamingTypes[streamingIndex].GetMethod("OnOneGUI");
+                    if (info != null)
+                    {
+                        if (info.IsStatic == true)
+                        {
+                            info.Invoke(null, new object[] { _hlod.StreamingOptions });
+                        }
+                    }
+                }
+            
+                if (m_UserDataSerializerTypes.Length > 0)
+                {
+                    int serializerIndex =
+                        Math.Max(Array.IndexOf(m_UserDataSerializerTypes, _hlod.UserDataSerializerType), 0);
+                    serializerIndex =0;
+                    _hlod.UserDataSerializerType = m_UserDataSerializerTypes[serializerIndex];
+                }
  
+
+
+            CoroutineRunner.RunCoroutine(HLODCreator.Create(_hlod));
+        }
+    }
 }

@@ -362,17 +362,24 @@ namespace Unity.HLODSystem.SpaceManager
                 options.UseSubHLODTree = false;
             if (options.SubHLODTreeSize == null)
                 options.SubHLODTreeSize = 100.0f;
-
-            //Draw UI
-            options.LooseSize = EditorGUILayout.FloatField("Loose size", options.LooseSize);
-
-            options.UseSubHLODTree = EditorGUILayout.ToggleLeft("Use sub HLOD tree", options.UseSubHLODTree);
-            if (options.UseSubHLODTree == true)
+            try
             {
-                EditorGUI.indentLevel += 1;
-                options.SubHLODTreeSize = EditorGUILayout.FloatField("Sub tree size", options.SubHLODTreeSize);
-                EditorGUI.indentLevel -= 1;
+//Draw UI
+                options.LooseSize = EditorGUILayout.FloatField("Loose size", options.LooseSize);
+
+                options.UseSubHLODTree = EditorGUILayout.ToggleLeft("Use sub HLOD tree", options.UseSubHLODTree);
+                if (options.UseSubHLODTree == true)
+                {
+                    EditorGUI.indentLevel += 1;
+                    options.SubHLODTreeSize = EditorGUILayout.FloatField("Sub tree size", options.SubHLODTreeSize);
+                    EditorGUI.indentLevel -= 1;
+                }
             }
+            catch 
+            {
+              Debug.Log("Non serializable object");
+            }
+            
 
         }
 
