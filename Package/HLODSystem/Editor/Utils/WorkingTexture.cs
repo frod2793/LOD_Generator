@@ -377,20 +377,25 @@ namespace Unity.HLODSystem.Utils
         
         private void CopyFrom(Texture2D texture)
         {
-            //make to texture readable.
-            var assetImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(texture));
+            string assetPath = AssetDatabase.GetAssetPath(texture);
+            var assetImporter = AssetImporter.GetAtPath(assetPath);
             var textureImporter = assetImporter as TextureImporter;
-            TextureImporterType type = TextureImporterType.Default;
+            TextureImporterType originalType = TextureImporterType.Default;
 
             m_linear = !GraphicsFormatUtility.IsSRGBFormat(texture.graphicsFormat);
             m_wrapMode = texture.wrapMode;
-            
+
             if (textureImporter)
             {
-                type = textureImporter.textureType;
+                originalType = textureImporter.textureType;
                 textureImporter.isReadable = true;
                 textureImporter.textureType = TextureImporterType.Default;
                 textureImporter.SaveAndReimport();
+            }
+            else
+            {
+                Debug.LogError("Failed to get TextureImporter for texture: " + texture.name);
+                return;
             }
 
             try
@@ -399,7 +404,7 @@ namespace Unity.HLODSystem.Utils
                 Color[] texturePixels = texture.GetPixels();
                 if (texturePixels.Length != count)
                 {
-                    //TODO: logging
+                    Debug.LogError("Texture pixel count mismatch.");
                     return;
                 }
 
@@ -410,12 +415,12 @@ namespace Unity.HLODSystem.Utils
                 if (textureImporter)
                 {
                     textureImporter.isReadable = false;
-                    textureImporter.textureType = type;
+                    textureImporter.textureType = originalType;
                     textureImporter.SaveAndReimport();
                 }
             }
-
         }
+
 
     }
 

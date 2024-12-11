@@ -13,6 +13,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
     {
         private Texture _icon;
         private bool _objectSelected;
+        private bool _isHLODSelected;
         private float _hSliderValue;
         private string _objPath;
         private List<GameObject> _objectsToSimplify;
@@ -22,11 +23,11 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
         private bool _isColider;
         private bool _isHLOD;
-        
+
         public string SavePath = "Assets/";
         private float minuswidth = 7f;
-        
-        
+
+
         private void OnEnable()
         {
             _hSliderValue = 1f;
@@ -57,7 +58,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
             SelectPath_Btn_GUI();
 
-
             Toggle_Colider_GUI();
 
             if (_objectSelected)
@@ -67,20 +67,21 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
             Select_Object_from_File_Btn_GUI();
 
-            Select_Object_from_Scene_GUI();
-
             List_Clear_Btn_GUI();
 
             Drag_And_Drop_GUI();
 
             GetHLOD_GameObjects();
-            
+
             GUILayout.EndVertical();
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
         }
 
+        /// <summary>
+        /// LOD 를 만들 오브젝트를 드래그앤 드랍으로 가져오기
+        /// </summary>
         private void Drag_And_Drop_GUI()
         {
             GUILayout.Space(20);
@@ -103,16 +104,19 @@ namespace Plugins.Auto_LOD_Generator.Editor
                         }
                     }
                 }
+
                 Event.current.Use();
             }
         }
 
-        
+        /// <summary>
+        /// HLOD 오브젝트 가져오기 버튼과 리스트 보여주기
+        /// </summary>
         private void GetHLOD_GameObjects()
         {
             HLODEditor hlodEditor = CreateInstance<HLODEditor>();
 
-            if (GUILayout.Button("get HLOD obj", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+            if (GUILayout.Button("Get HLOD obj", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
             {
                 _objectsToHLOD = hlodEditor.GetHLOD_GameObjects();
             }
@@ -124,34 +128,51 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 {
                     EditorGUILayout.ObjectField(obj, typeof(GameObject), true);
                 }
+
+                if (_objectsToHLOD.Count > 0)
+                {
+                    _isHLODSelected = true;
+                }
             }
 
-            if (GUILayout.Button("GenerateHLod", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+            if (_isHLODSelected)
             {
-                // _objectsToHLOD 리스트가 null이 아니고, 오브젝트가 하나 이상 있는지 확인
-                if (_objectsToHLOD != null && _objectsToHLOD.Count > 0)
+                if (GUILayout.Button("GenerateHLod", GUILayout.Height(20f),
+                        GUILayout.Width(position.width - minuswidth)))
                 {
-                    // _objectsToHLOD 리스트에 있는 각 오브젝트에 대해 HLOD 생성
-                    foreach (var obj in _objectsToHLOD)
+                    // _objectsToHLOD 리스트가 null이 아니고, 오브젝트가 하나 이상 있는지 확인
+                    if (_objectsToHLOD != null && _objectsToHLOD.Count > 0)
                     {
-                        CoroutineRunner.RunCoroutine(GenerateHLODWithDelay(hlodEditor, obj));
+                        // _objectsToHLOD 리스트에 있는 각 오브젝트에 대해 HLOD 생성
+                        foreach (var obj in _objectsToHLOD)
+                        {
+                            CoroutineRunner.RunCoroutine(GenerateHLODWithDelay(hlodEditor, obj));
+                        }
+                    }
+                    else
+                    {
+                        // HLOD 오브젝트가 없을 경우 에러 메시지 출력
+                        Debug.LogError("No HLOD objects to generate.");
                     }
                 }
-                else
-                {
-                    // HLOD 오브젝트가 없을 경우 에러 메시지 출력
-                    Debug.LogError("No HLOD objects to generate.");
-                }
             }
-
-           
         }
+
+        /// <summary>
+        /// HLOD 가 생성될시 중복 생성호출을 방지하기 위해 코루틴으로 딜레이를 줌
+        /// </summary>
+        /// <param name="hlodEditor"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         private IEnumerator GenerateHLODWithDelay(HLODEditor hlodEditor, GameObject obj)
         {
-         
             hlodEditor.GenerateHLOD(obj); // HLOD 오브젝트 생성
             yield return new WaitUntil(() => HLODCreator.isCreating == false); // HLOD 생성이 완료될 때까지 대기
         }
+
+        /// <summary>
+        /// 리스트 초기화 버튼
+        /// </summary>
         private void List_Clear_Btn_GUI()
         {
             GUILayout.Space(20);
@@ -159,28 +180,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
             {
                 _objectsToSimplify.Clear();
                 _objectSelected = false;
-                 if(_objectsToHLOD != null)
+                if (_objectsToHLOD != null)
                     _objectsToHLOD.Clear();
-            }
-        }
-
-        private void Select_Object_from_Scene_GUI()
-        {
-            GUILayout.Space(20);
-            if (GUILayout.Button("Select Object from Scene", GUILayout.Height(20f),
-                    GUILayout.Width(position.width - minuswidth)))
-            {
-                var selectedObjects = Selection.gameObjects;
-                if (selectedObjects.Length > 0)
-                {
-                    _objectSelected = true;
-                    _objectsToSimplify.AddRange(selectedObjects);
-                    _objPath = selectedObjects[0].name;
-                }
-                else
-                {
-                    Debug.LogError("No object selected in the scene.");
-                }
             }
         }
 
@@ -205,6 +206,9 @@ namespace Plugins.Auto_LOD_Generator.Editor
             }
         }
 
+        /// <summary>
+        ///  HLOD 또는 콜라이더 활성화 토글
+        /// </summary>
         private void Toggle_Colider_GUI()
         {
             GUILayout.Space(20);
@@ -213,11 +217,15 @@ namespace Plugins.Auto_LOD_Generator.Editor
             _isHLOD = EditorGUILayout.Toggle("Use HLOD", _isHLOD);
         }
 
+        /// <summary>
+        /// 저장경로 선택 버튼
+        /// </summary>
         private void SelectPath_Btn_GUI()
-        { 
+        {
             GUILayout.BeginVertical();
             GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
-            if (GUILayout.Button("Select Save Path", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+            if (GUILayout.Button("Select Save Path", GUILayout.Height(20f),
+                    GUILayout.Width(position.width - minuswidth)))
             {
                 var selectedPath = EditorUtility.OpenFolderPanel("Select Save Path", Application.dataPath, SavePath);
                 if (selectedPath.StartsWith(Application.dataPath))
@@ -229,14 +237,19 @@ namespace Plugins.Auto_LOD_Generator.Editor
                     Debug.LogError("The selected path must be within the Assets directory.");
                 }
             }
+
             SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f),
                 GUILayout.Width(position.width - minuswidth));
         }
 
+        /// <summary>
+        /// 오브젝트가 선택된후 LOD 생성 버튼 과 퀄리티 조절 슬라이더
+        /// </summary>
         private void ObjectSelected_GUI()
         {
             GUILayout.Space(20);
-            EditorGUILayout.LabelField("Quality Factor: ", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth));
+            EditorGUILayout.LabelField("Quality Factor: ", GUILayout.Height(20f),
+                GUILayout.Width(position.width - minuswidth));
             var textFieldVal = float.Parse(EditorGUILayout.TextField(
                 _hSliderValue.ToString(CultureInfo.InvariantCulture), GUILayout.Height(20f),
                 GUILayout.Width(position.width)));
@@ -254,11 +267,11 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 GUILayout.Width(position.width - minuswidth));
             GUILayout.Space(20);
 
-            if (GUILayout.Button("Generate", GUILayout.Height(20f), GUILayout.Width(position.width-minuswidth)))
+            if (GUILayout.Button("Generate", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
             {
                 foreach (var obj in _objectsToSimplify)
                 {
-                    LODGenerator.Generator(obj, _hSliderValue, SavePath, _isColider,_isHLOD);
+                    LODGenerator.Generator(obj, _hSliderValue, SavePath, _isColider, _isHLOD);
                 }
             }
         }

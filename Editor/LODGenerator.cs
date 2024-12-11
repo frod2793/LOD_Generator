@@ -9,7 +9,15 @@ namespace Plugins.Auto_LOD_Generator.Editor
 {
     public class LODGenerator : MonoBehaviour
     {
-        //lod 그룹에 포함되지않는  오브젝트  1개 생성
+      /// <summary>
+      /// LOG 생성 함수
+      /// </summary>
+      /// <param name="originalObject"></param>
+      /// <param name="qualityFactor"></param>
+      /// <param name="path"></param>
+      /// <param name="isColider"></param>
+      /// <param name="isHLOD"></param>
+      /// <exception cref="ArgumentNullException"></exception>
         public static void Generator([JetBrains.Annotations.NotNull] GameObject originalObject, float qualityFactor, string path,bool isColider,bool isHLOD)
         {
             const int count = 4;
@@ -61,7 +69,6 @@ namespace Plugins.Auto_LOD_Generator.Editor
                 newParent.GetComponent<LODGroup>().SetLODs(lods);
                 newParent.GetComponent<LODGroup>().RecalculateBounds();
                 NewHLOD.transform.SetParent(originalObject.transform.parent);
-           
                 hlodEditor.SetLoclDirectory(path);
             }
             else
