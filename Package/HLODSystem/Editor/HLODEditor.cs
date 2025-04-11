@@ -413,23 +413,22 @@ namespace Unity.HLODSystem
             m_UserDataSerializerNames = m_UserDataSerializerTypes.Select(t => t.Name).ToArray();
 
             isFirstOnGUI = true;
-            
+
             if (m_splitter == null)
             {
                 m_splitter = SpaceSplitterTypes.CreateInstance(_hlod);
             }
 
-                // m_ChunkSizeProperty.floatValue =30;
+            // m_ChunkSizeProperty.floatValue =30;
 
-                if (m_splitter != null)
-                {
-                    var bounds = _hlod.GetBounds();
-                    int depth = m_splitter.CalculateTreeDepth(bounds, 30f);
-                }
+            if (m_splitter != null)
+            {
+                var bounds = _hlod.GetBounds();
+                int depth = m_splitter.CalculateTreeDepth(bounds, 30f);
+            }
 
             if (m_SpaceSplitterTypes.Length > 0)
             {
-
                 int spaceSplitterIndex = Math.Max(Array.IndexOf(m_SpaceSplitterTypes, _hlod.SpaceSplitterType), 0);
                 spaceSplitterIndex = 0;
                 _hlod.SpaceSplitterType = m_SpaceSplitterTypes[spaceSplitterIndex];
@@ -459,67 +458,64 @@ namespace Unity.HLODSystem
                 }
             }
 
-           
-                if (m_SimplifierTypes.Length > 0)
-                {
-                    int simplifierIndex = Math.Max(Array.IndexOf(m_SimplifierTypes, _hlod.SimplifierType), 0);
-                    simplifierIndex = 0;
-                    _hlod.SimplifierType = m_SimplifierTypes[simplifierIndex];
 
-                    var info = m_SimplifierTypes[simplifierIndex].GetMethod("OnGUI");
-                    if (info != null)
+            if (m_SimplifierTypes.Length > 0)
+            {
+                int simplifierIndex = Math.Max(Array.IndexOf(m_SimplifierTypes, _hlod.SimplifierType), 0);
+                simplifierIndex = 0;
+                _hlod.SimplifierType = m_SimplifierTypes[simplifierIndex];
+
+                var info = m_SimplifierTypes[simplifierIndex].GetMethod("OnGUI");
+                if (info != null)
+                {
+                    if (info.IsStatic == true)
                     {
-                        if (info.IsStatic == true)
-                        {
-                            info.Invoke(null, new object[] { _hlod.SimplifierOptions });
-                        }
+                        info.Invoke(null, new object[] { _hlod.SimplifierOptions });
                     }
                 }
-            
+            }
 
-       
-                if (m_BatcherTypes.Length > 0)
+
+            if (m_BatcherTypes.Length > 0)
+            {
+                int batcherIndex = Math.Max(Array.IndexOf(m_BatcherTypes, _hlod.BatcherType), 0);
+                batcherIndex = 1;
+                _hlod.BatcherType = m_BatcherTypes[batcherIndex];
+
+                var info = m_BatcherTypes[batcherIndex].GetMethod("OnGUI");
+                if (info != null)
                 {
-                    int batcherIndex = Math.Max(Array.IndexOf(m_BatcherTypes, _hlod.BatcherType), 0);
-                    batcherIndex = 1;
-                    _hlod.BatcherType = m_BatcherTypes[batcherIndex];
-
-                    var info = m_BatcherTypes[batcherIndex].GetMethod("OnGUI");
-                    if (info != null)
+                    if (info.IsStatic == true)
                     {
-                        if (info.IsStatic == true)
-                        {
-                            info.Invoke(null, new object[] { hlod, isFirstOnGUI });
-                        }
+                        info.Invoke(null, new object[] { hlod, isFirstOnGUI });
                     }
                 }
-            
+            }
 
-            
-                if (m_StreamingTypes.Length > 0)
+
+            if (m_StreamingTypes.Length > 0)
+            {
+                int streamingIndex = Math.Max(Array.IndexOf(m_StreamingTypes, _hlod.StreamingType), 0);
+                streamingIndex = 0;
+                _hlod.StreamingType = m_StreamingTypes[streamingIndex];
+
+                var info = m_StreamingTypes[streamingIndex].GetMethod("OnOneGUI");
+                if (info != null)
                 {
-                    int streamingIndex = Math.Max(Array.IndexOf(m_StreamingTypes, _hlod.StreamingType), 0);
-                    streamingIndex = 0;
-                    _hlod.StreamingType = m_StreamingTypes[streamingIndex];
-
-                    var info = m_StreamingTypes[streamingIndex].GetMethod("OnOneGUI");
-                    if (info != null)
+                    if (info.IsStatic == true)
                     {
-                        if (info.IsStatic == true)
-                        {
-                            info.Invoke(null, new object[] { _hlod.StreamingOptions });
-                        }
+                        info.Invoke(null, new object[] { _hlod.StreamingOptions });
                     }
                 }
-            
-                if (m_UserDataSerializerTypes.Length > 0)
-                {
-                    int serializerIndex =
-                        Math.Max(Array.IndexOf(m_UserDataSerializerTypes, _hlod.UserDataSerializerType), 0);
-                    serializerIndex =0;
-                    _hlod.UserDataSerializerType = m_UserDataSerializerTypes[serializerIndex];
-                }
- 
+            }
+
+            if (m_UserDataSerializerTypes.Length > 0)
+            {
+                int serializerIndex =
+                    Math.Max(Array.IndexOf(m_UserDataSerializerTypes, _hlod.UserDataSerializerType), 0);
+                serializerIndex = 0;
+                _hlod.UserDataSerializerType = m_UserDataSerializerTypes[serializerIndex];
+            }
 
 
             CoroutineRunner.RunCoroutine(HLODCreator.Create(_hlod));

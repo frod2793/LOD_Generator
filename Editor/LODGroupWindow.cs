@@ -1,6 +1,8 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using Unity.HLODSystem;
 using Unity.HLODSystem.Utils;
 using UnityEditor;
@@ -11,7 +13,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
 {
     public class LODGroupWindow : EditorWindow
     {
-        private Texture _icon;
+        private Texture2D _icon;
         private bool _objectSelected;
         private bool _isHLODSelected;
         private float _hSliderValue;
@@ -19,7 +21,7 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private List<GameObject> _objectsToSimplify;
         private List<GameObject> _objectsToHLOD;
         private ReorderableList _reorderableList;
-        private const string _iconPath = "Assets/LOD_Generator/Editor/icon.png";
+        private const string _iconPath = "LOD_Generator/Editor/icon.png";
 
         private bool _isColider;
         private bool _isHLOD;
@@ -30,8 +32,31 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
         private void OnEnable()
         {
+            MonoScript script = MonoScript.FromScriptableObject(this);
+            string scriptPath = AssetDatabase.GetAssetPath(script);
+
+            if (!string.IsNullOrEmpty(scriptPath))
+            {
+                string scriptDirectory = Path.GetDirectoryName(scriptPath);
+
+                string iconRelativePath = "icon.png";
+
+                string fullIconPath = Path.Combine(scriptDirectory, iconRelativePath).Replace('\\', '/');
+
+                _icon = AssetDatabase.LoadAssetAtPath<Texture2D>(fullIconPath);
+
+                if (_icon == null)
+                {
+                    Debug.LogWarning($"LODGroupWindow 아이콘 로드 실패: {fullIconPath}. 아이콘 파일 위치를 확인하세요.");
+                }
+            }
+            else
+            {
+                Debug.LogError("LODGroupWindow 스크립트 경로를 찾을 수 없습니다.");
+            }
+            // --- 아이콘 로드 로직 끝 ---
+
             _hSliderValue = 1f;
-            _icon = (Texture)AssetDatabase.LoadAssetAtPath(_iconPath, typeof(Texture));
             _objectSelected = false;
             _objectsToSimplify = new List<GameObject>();
             GetWindow(typeof(LODGroupWindow));
@@ -51,32 +76,50 @@ namespace Plugins.Auto_LOD_Generator.Editor
             };
         }
 
+        private Vector2 _scrollPosition = Vector2.zero; // 스크롤 위치를 저장할 변수 추가
+
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(0f, 0f, position.width, position.height));
-            GUILayout.BeginHorizontal();
+            _scrollPosition = GUILayout.BeginScrollView(
+                _scrollPosition,
+                false,
+                true,
+                GUILayout.Width(position.width),
+                GUILayout.Height(position.height)
+            );
+
+            GUILayout.BeginVertical();
+
 
             SelectPath_Btn_GUI();
+            GUILayout.Space(10);
 
             Toggle_Colider_GUI();
+            GUILayout.Space(10);
 
+            // 오브젝트가 선택된 경우에만 LOD 설정 및 생성 버튼 표시
             if (_objectSelected)
             {
                 ObjectSelected_GUI();
+                GUILayout.Space(10);
             }
 
             Select_Object_from_File_Btn_GUI();
+            GUILayout.Space(10);
 
             List_Clear_Btn_GUI();
+            GUILayout.Space(20);
 
             Drag_And_Drop_GUI();
+            GUILayout.Space(10);
 
             GetHLOD_GameObjects();
+            GUILayout.Space(10);
+
 
             GUILayout.EndVertical();
-            GUILayout.EndVertical();
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
+
+            GUILayout.EndScrollView();
         }
 
         /// <summary>
@@ -84,29 +127,42 @@ namespace Plugins.Auto_LOD_Generator.Editor
         /// </summary>
         private void Drag_And_Drop_GUI()
         {
-            GUILayout.Space(20);
-            GUILayout.BeginVertical(GUILayout.Width(position.width), GUILayout.Height(position.height - 200));
+            GUILayout.BeginVertical();
+
+            // 리스트 표시
             _reorderableList.DoLayoutList();
 
+            // 드래그 앤 드롭 처리
             var evt = Event.current;
             if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
             {
-                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                if (evt.type == EventType.DragPerform)
+                // 드래그된 오브젝트가 GameObject인지 확인
+                bool hasValidObjects = DragAndDrop.objectReferences.Any(obj => obj is GameObject);
+
+                // 유효한 오브젝트가 있을 경우만 드래그 허용
+                DragAndDrop.visualMode = hasValidObjects ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+
+                if (evt.type == EventType.DragPerform && hasValidObjects)
                 {
                     DragAndDrop.AcceptDrag();
                     foreach (var draggedObject in DragAndDrop.objectReferences)
                     {
                         if (draggedObject is GameObject gameObject)
                         {
-                            _objectsToSimplify.Add(gameObject);
-                            _objectSelected = true;
+                            // 중복 오브젝트 확인
+                            if (!_objectsToSimplify.Contains(gameObject))
+                            {
+                                _objectsToSimplify.Add(gameObject);
+                                _objectSelected = true;
+                            }
                         }
                     }
                 }
 
                 Event.current.Use();
             }
+
+            GUILayout.EndVertical(); // 누락된 EndVertical 추가
         }
 
         /// <summary>
@@ -240,6 +296,8 @@ namespace Plugins.Auto_LOD_Generator.Editor
 
             SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f),
                 GUILayout.Width(position.width - minuswidth));
+    
+            GUILayout.EndVertical(); // 누락된 EndVertical 추가
         }
 
         /// <summary>
