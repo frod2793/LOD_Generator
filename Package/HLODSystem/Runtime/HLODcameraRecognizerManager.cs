@@ -5,6 +5,8 @@ namespace Unity.HLODSystem
 {
     public class HLODCameraRecognizerManager
     {
+     
+
         private static HLODCameraRecognizerManager s_instance; 
         public static HLODCameraRecognizerManager Instance
         {
