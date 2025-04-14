@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,7 +10,8 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace Plugins.Auto_LOD_Generator.Editor
+
+namespace Plugins.Auto_LOD_Generator.EditorScripts
 {
     public class LODGroupWindow : EditorWindow
     {
@@ -20,7 +22,9 @@ namespace Plugins.Auto_LOD_Generator.Editor
         private string _objPath;
         private List<GameObject> _objectsToSimplify;
         private List<GameObject> _objectsToHLOD;
-        private ReorderableList _reorderableList;
+
+private UnityEditorInternal.ReorderableList _reorderableList;
+
         private const string _iconPath = "LOD_Generator/Editor/icon.png";
 
         private bool _isColider;
@@ -335,3 +339,4 @@ namespace Plugins.Auto_LOD_Generator.Editor
         }
     }
 }
+#endif

@@ -1,8 +1,8 @@
-
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
-namespace Plugins.Auto_LOD_Generator.Editor
+namespace Plugins.Auto_LOD_Generator.EditorScripts
 {
     public class AutoLOD : UnityEditor.Editor
     {
@@ -23,3 +23,4 @@ namespace Plugins.Auto_LOD_Generator.Editor
         }
     }
 }
+#endif

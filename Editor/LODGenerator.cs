@@ -1,11 +1,12 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using Unity.HLODSystem;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Plugins.Auto_LOD_Generator.Editor
+namespace Plugins.Auto_LOD_Generator.EditorScripts
 {
     public class LODGenerator : MonoBehaviour
     {
@@ -217,3 +218,4 @@ namespace Plugins.Auto_LOD_Generator.Editor
         
     }
 }
+#endif
