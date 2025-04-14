@@ -6,7 +6,11 @@ namespace Unity.HLODSystem
     public class HLODCameraRecognizer : MonoBehaviour
     {
         private Camera m_recognizedCamera;
-        public Camera RecognizedCamera => m_recognizedCamera;
+
+        private static Camera s_recognizedCamera;
+        public static Camera RecognizedCamera => s_recognizedCamera;
+
+        public Camera LocalRecognizedCamera => m_recognizedCamera;
 
         [SerializeField]
         private int m_id;
@@ -34,8 +38,8 @@ namespace Unity.HLODSystem
 
         private void Awake()
         {
-            
             m_recognizedCamera = GetComponent<Camera>();
+            s_recognizedCamera = m_recognizedCamera;
         }
         private void OnEnable()
         {
