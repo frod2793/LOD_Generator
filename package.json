@@ -1,9 +1,9 @@
 {
   "name": "com.frod2793.lodgenerator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "LOD Generator",
   "description": "A package for generating Levels of Detail (LOD).",
-  "unity": "2022.3",
+  "unity": "2021.3",
 
   "author": {
     "name": "frod2793",
