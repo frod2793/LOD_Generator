@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using TextureCompressionQuality = UnityEditor.TextureCompressionQuality;
 
 namespace Unity.HLODSystem.Utils
 {

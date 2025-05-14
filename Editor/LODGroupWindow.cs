@@ -65,7 +65,7 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
             _objectsToSimplify = new List<GameObject>();
             var window = GetWindow<LODGroupWindow>(true, "LOD Generator", true);
             window.Focus();
-    
+
             minSize = new Vector2(600, 800f);
             maxSize = new Vector2(1200, 1600f);
 
@@ -125,7 +125,7 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
 
             Texture_ReadWrite_GUI();
             GUILayout.Space(10);
-            
+
             GUILayout.EndVertical();
 
             GUILayout.EndScrollView();
@@ -202,6 +202,20 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
 
             if (_isHLODSelected)
             {
+                if (GUILayout.Button("텍스처 권한 자동 설정", GUILayout.Height(20f), 
+                        GUILayout.Width(position.width - minuswidth)))
+                {
+                    if (_objectsToHLOD != null && _objectsToHLOD.Count > 0)
+                    {
+                        int totalCount = 0;
+                        foreach (var obj in _objectsToHLOD)
+                        {
+                            EnableAllTexturesReadWrite(obj);
+                        }
+                        EditorUtility.DisplayDialog("완료", "모든 텍스처의 Read/Write 권한이 설정되었습니다.", "확인");
+                    }
+                }
+                
                 if (GUILayout.Button("GenerateHLod", GUILayout.Height(20f),
                         GUILayout.Width(position.width - minuswidth)))
                 {
@@ -231,6 +245,12 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
         /// <returns></returns>
         private IEnumerator GenerateHLODWithDelay(HLODEditor hlodEditor, GameObject obj)
         {
+            // HLOD 생성 전 텍스처 권한 자동 설정
+            EnableAllTexturesReadWrite(obj);
+
+            // 약간의 지연을 줘서 텍스처 리임포트가 완료될 시간 확보
+            yield return new EditorWaitForSeconds(0.5f);
+
             hlodEditor.GenerateHLOD(obj); // HLOD 오브젝트 생성
             yield return new WaitUntil(() => HLODCreator.isCreating == false); // HLOD 생성이 완료될 때까지 대기
         }
@@ -305,7 +325,7 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
 
             SavePath = EditorGUILayout.TextField("Save Path:", SavePath, GUILayout.Height(20f),
                 GUILayout.Width(position.width - minuswidth));
-    
+
             GUILayout.EndVertical(); // 누락된 EndVertical 추가
         }
 
@@ -342,13 +362,15 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
                 }
             }
         }
+
         // LODGroupWindow 클래스 내부에 다음 메서드를 추가하세요
         private void Texture_ReadWrite_GUI()
         {
             GUILayout.Space(10);
             GUILayout.Label("텍스처 Read/Write 활성화", EditorStyles.boldLabel);
-    
-            if (GUILayout.Button("선택된 텍스처 Read/Write 활성화", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+
+            if (GUILayout.Button("선택된 텍스처 Read/Write 활성화", GUILayout.Height(20f),
+                    GUILayout.Width(position.width - minuswidth)))
             {
                 EnableReadWrite();
             }
@@ -358,19 +380,19 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
         private void EnableReadWrite()
         {
             Object[] selectedTextures = Selection.GetFiltered(typeof(Texture2D), SelectionMode.Assets);
-    
+
             if (selectedTextures.Length == 0)
             {
                 EditorUtility.DisplayDialog("알림", "텍스처를 먼저 선택해주세요.", "확인");
                 return;
             }
-    
+
             int count = 0;
             foreach (Texture2D texture in selectedTextures)
             {
                 string path = AssetDatabase.GetAssetPath(texture);
                 TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
-        
+
                 if (!importer.isReadable)
                 {
                     importer.isReadable = true;
@@ -378,10 +400,93 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
                     count++;
                 }
             }
-    
+
             EditorUtility.DisplayDialog("완료", $"{count}개 텍스처의 Read/Write 활성화 완료", "확인");
         }
+
+        private void OnFocus()
+        {
+            // 창이 포커스를 얻을 때마다 최상단으로 가져옴
+            Repaint();
+        }
+
+        private void OnInspectorUpdate()
+        {
+            Repaint();
+        }
+
+        private void EnableAllTexturesReadWrite(GameObject rootObject)
+        {
+            List<Material> allMaterials = new List<Material>();
+
+            // 모든 MeshRenderer에서 재질 수집
+            MeshRenderer[] meshRenderers = rootObject.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (MeshRenderer renderer in meshRenderers)
+            {
+                if (renderer.sharedMaterials != null)
+                {
+                    foreach (Material mat in renderer.sharedMaterials)
+                    {
+                        if (mat != null && !allMaterials.Contains(mat))
+                        {
+                            allMaterials.Add(mat);
+                        }
+                    }
+                }
+            }
+
+            // 각 재질의 텍스처 가져오기 및 처리
+            int count = 0;
+            foreach (Material material in allMaterials)
+            {
+                Shader shader = material.shader;
+                int propertyCount = ShaderUtil.GetPropertyCount(shader);
+
+                for (int i = 0; i < propertyCount; i++)
+                {
+                    if (ShaderUtil.GetPropertyType(shader, i) == ShaderUtil.ShaderPropertyType.TexEnv)
+                    {
+                        string propertyName = ShaderUtil.GetPropertyName(shader, i);
+                        Texture texture = material.GetTexture(propertyName);
+
+                        if (texture is Texture2D texture2D)
+                        {
+                            string assetPath = AssetDatabase.GetAssetPath(texture2D);
+                            if (!string.IsNullOrEmpty(assetPath))
+                            {
+                                TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                                if (importer != null && !importer.isReadable)
+                                {
+                                    importer.isReadable = true;
+                                    importer.SaveAndReimport();
+                                    count++;
+                                    Debug.Log($"텍스처 '{texture2D.name}'의 Read/Write 활성화 완료");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (count > 0)
+            {
+                Debug.Log($"총 {count}개 텍스처의 Read/Write 권한이 자동으로 활성화되었습니다.");
+            }
+        }
     }
-    
+    public class EditorWaitForSeconds : CustomYieldInstruction
+    {
+        private double _targetTime;
+
+        public EditorWaitForSeconds(float seconds)
+        {
+            _targetTime = EditorApplication.timeSinceStartup + seconds;
+        }
+
+        public override bool keepWaiting
+        {
+            get { return EditorApplication.timeSinceStartup < _targetTime; }
+        }
+    }
 }
 #endif
