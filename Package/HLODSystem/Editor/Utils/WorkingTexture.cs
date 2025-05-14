@@ -1,29 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using TextureCompressionQuality = UnityEditor.TextureCompressionQuality;
 
 namespace Unity.HLODSystem.Utils
 {
-
     public static class TextureExtensions
     {
         public static WorkingTexture ToWorkingTexture(this Texture2D texture, Allocator allocator)
         {
             var wt = new WorkingTexture(allocator, texture);
-           
+
             return wt;
-            
         }
     }
+
     public class WorkingTexture : IDisposable
     {
         private NativeArray<int> m_detector = new NativeArray<int>(1, Allocator.Persistent);
-        
+
         private WorkingTextureBuffer m_buffer;
 
         public string Name
@@ -48,11 +45,11 @@ namespace Unity.HLODSystem.Utils
             set => m_buffer.WrapMode = value;
             get => m_buffer.WrapMode;
         }
-        
+
         private WorkingTexture()
         {
-            
         }
+
         public WorkingTexture(Allocator allocator, TextureFormat format, int width, int height, bool linear)
         {
             m_buffer = WorkingTextureBufferManager.Instance.Create(allocator, format, width, height, linear);
@@ -84,21 +81,19 @@ namespace Unity.HLODSystem.Utils
         {
             return m_buffer.ToTexture();
         }
-        
+
         public Guid GetGUID()
         {
-            return m_buffer.GetGUID(); 
-                
+            return m_buffer.GetGUID();
         }
 
         public void SetPixel(int x, int y, Color color)
         {
             MakeWriteable();
-            
-            m_buffer.SetPixel(x, y, color);
 
+            m_buffer.SetPixel(x, y, color);
         }
-   
+
 
         public Color GetPixel(int x, int y)
         {
@@ -109,7 +104,7 @@ namespace Unity.HLODSystem.Utils
         {
             float x = u * (Width - 1);
             float y = v * (Height - 1);
-            
+
             int x1 = Mathf.FloorToInt(x);
             int x2 = Mathf.CeilToInt(x);
 
@@ -128,20 +123,17 @@ namespace Unity.HLODSystem.Utils
         public void Blit(WorkingTexture source, int x, int y)
         {
             MakeWriteable();
-           
+
             m_buffer.Blit(source.m_buffer, x, y);
         }
-        
 
-        
-      
 
         public WorkingTexture Resize(Allocator allocator, int newWidth, int newHeight)
         {
             WorkingTexture wt = new WorkingTexture(allocator, m_buffer.Format, newWidth, newHeight, m_buffer.Linear);
 
-            float xWeight = (float) (m_buffer.Widht - 1) / (float) (newWidth - 1);
-            float yWeight = (float) (m_buffer.Height - 1) / (float) (newHeight - 1);
+            float xWeight = (float)(m_buffer.Widht - 1) / (float)(newWidth - 1);
+            float yWeight = (float)(m_buffer.Height - 1) / (float)(newHeight - 1);
 
             for (int y = 0; y < newHeight; ++y)
             {
@@ -156,11 +148,10 @@ namespace Unity.HLODSystem.Utils
                     wt.SetPixel(x, y, GetPixel(u, v));
                 }
             }
-            
+
             return wt;
         }
 
-       
 
         private void MakeWriteable()
         {
@@ -176,11 +167,12 @@ namespace Unity.HLODSystem.Utils
     public class WorkingTextureBufferManager
     {
         private static WorkingTextureBufferManager s_instance;
+
         public static WorkingTextureBufferManager Instance
         {
             get
             {
-                if ( s_instance == null )
+                if (s_instance == null)
                     s_instance = new WorkingTextureBufferManager();
 
                 return s_instance;
@@ -189,24 +181,26 @@ namespace Unity.HLODSystem.Utils
 
 
         private Dictionary<Texture2D, WorkingTextureBuffer> m_cache = new Dictionary<Texture2D, WorkingTextureBuffer>();
+
         public WorkingTextureBuffer Get(Allocator allocator, Texture2D texture)
         {
             WorkingTextureBuffer buffer = null;
             if (m_cache.ContainsKey(texture) == true)
             {
                 buffer = m_cache[texture];
-                
             }
             else
             {
                 buffer = new WorkingTextureBuffer(allocator, texture);
                 m_cache.Add(texture, buffer);
             }
+
             buffer.AddRef();
             return buffer;
         }
 
-        public WorkingTextureBuffer Create(Allocator allocator, TextureFormat format, int width, int height, bool linear)
+        public WorkingTextureBuffer Create(Allocator allocator, TextureFormat format, int width, int height,
+            bool linear)
         {
             WorkingTextureBuffer buffer = new WorkingTextureBuffer(allocator, format, width, height, linear);
             buffer.AddRef();
@@ -228,7 +222,7 @@ namespace Unity.HLODSystem.Utils
             }
         }
     }
-    
+
     public class WorkingTextureBuffer : IDisposable
     {
         private Allocator m_allocator;
@@ -236,14 +230,14 @@ namespace Unity.HLODSystem.Utils
         private int m_width;
         private int m_height;
         private bool m_linear;
-        
+
         private NativeArray<Color> m_pixels;
-        
+
         private int m_refCount;
         private Texture2D m_source;
 
         private Guid m_guid;
-        
+
         private TextureWrapMode m_wrapMode = TextureWrapMode.Repeat;
 
         public string Name { set; get; }
@@ -251,6 +245,7 @@ namespace Unity.HLODSystem.Utils
         public TextureFormat Format => m_format;
         public int Widht => m_width;
         public int Height => m_height;
+
         public bool Linear
         {
             set => m_linear = value;
@@ -271,14 +266,15 @@ namespace Unity.HLODSystem.Utils
             m_width = width;
             m_height = height;
             m_linear = linear;
-            m_pixels = new NativeArray<Color>( width * height, allocator);
+            m_pixels = new NativeArray<Color>(width * height, allocator);
             m_refCount = 0;
             m_source = null;
             m_guid = Guid.NewGuid();
         }
 
-        public WorkingTextureBuffer(Allocator allocator, Texture2D source) 
-            : this(allocator, source.format, source.width, source.height, !GraphicsFormatUtility.IsSRGBFormat(source.graphicsFormat))
+        public WorkingTextureBuffer(Allocator allocator, Texture2D source)
+            : this(allocator, source.format, source.width, source.height,
+                !GraphicsFormatUtility.IsSRGBFormat(source.graphicsFormat))
         {
             Name = source.name;
             m_source = source;
@@ -292,6 +288,7 @@ namespace Unity.HLODSystem.Utils
             buffer.Blit(this, 0, 0);
             return buffer;
         }
+
         public Texture2D ToTexture()
         {
             Texture2D texture = new Texture2D(m_width, m_height, m_format, false, m_linear);
@@ -301,7 +298,7 @@ namespace Unity.HLODSystem.Utils
             texture.Apply();
             return texture;
         }
-        
+
         public Guid GetGUID()
         {
             return m_guid;
@@ -311,6 +308,7 @@ namespace Unity.HLODSystem.Utils
         {
             return m_source != null;
         }
+
         public Texture2D GetSource()
         {
             return m_source;
@@ -336,10 +334,10 @@ namespace Unity.HLODSystem.Utils
         {
             return m_refCount;
         }
-        
+
         public void Dispose()
         {
-            if( m_pixels.IsCreated )
+            if (m_pixels.IsCreated)
                 m_pixels.Dispose();
         }
 
@@ -361,7 +359,7 @@ namespace Unity.HLODSystem.Utils
             for (int sy = 0; sy < height; ++sy)
             {
                 int ty = y + sy;
-                if ( ty < 0 || ty >= m_height )
+                if (ty < 0 || ty >= m_height)
                     continue;
 
                 for (int sx = 0; sx < width; ++sx)
@@ -374,7 +372,7 @@ namespace Unity.HLODSystem.Utils
                 }
             }
         }
-        
+
         private void CopyFrom(Texture2D texture)
         {
             if (texture == null)
@@ -383,56 +381,102 @@ namespace Unity.HLODSystem.Utils
                 return;
             }
 
+            string assetPath = AssetDatabase.GetAssetPath(texture);
+
+            // 텍스처가 읽을 수 없는 상태인 경우
             if (!texture.isReadable)
             {
-                Debug.LogError($"텍스처 '{texture.name}'에 읽기 권한이 없습니다. 프로젝트 창에서 해당 텍스처를 찾아 Inspector의 Advanced 설정에서 'Read/Write Enabled'를 체크하세요.");
-                return;
-            }
-            string assetPath = AssetDatabase.GetAssetPath(texture);
-            var assetImporter = AssetImporter.GetAtPath(assetPath);
-            var textureImporter = assetImporter as TextureImporter;
-            TextureImporterType originalType = TextureImporterType.Default;
+                // 에셋 경로가 유효하지 않은 경우 (내장 텍스처 등) 처리
+                if (string.IsNullOrEmpty(assetPath))
+                {
+                    Debug.LogError($"텍스처 '{texture.name}'는 유효한 에셋 경로가 없어 읽기 권한을 설정할 수 없습니다.");
+                    CreateDefaultTexture(); // 기본 텍스처 생성하는 대체 방법
+                    return;
+                }
 
-            m_linear = !GraphicsFormatUtility.IsSRGBFormat(texture.graphicsFormat);
-            m_wrapMode = texture.wrapMode;
+                TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                if (importer != null)
+                {
+                    Debug.Log($"텍스처 '{texture.name}'에 읽기 권한 설정 중...");
 
-            if (textureImporter)
-            {
-                originalType = textureImporter.textureType;
-                textureImporter.isReadable = true;
-                textureImporter.textureType = TextureImporterType.Default;
-                textureImporter.SaveAndReimport();
-            }
-            else
-            {
-                Debug.LogError("Failed to get TextureImporter for texture: " + texture.name);
-                return;
+                    // 원래 설정 저장
+                    bool originalReadable = importer.isReadable;
+
+                    try
+                    {
+                        // 읽기 가능하도록 설정
+                        importer.isReadable = true;
+                        importer.SaveAndReimport();
+
+                        // AssetDatabase 작업이 완료되도록 잠시 기다림
+                        AssetDatabase.Refresh();
+
+                        // 텍스처를 다시 로드
+                        texture = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+
+                        if (texture == null || !texture.isReadable)
+                        {
+                            Debug.LogError($"텍스처 '{assetPath}'를 읽기 가능한 상태로 다시 로드하는데 실패했습니다.");
+                            CreateDefaultTexture();
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"텍스처 '{texture.name}' 설정 변경 중 오류 발생: {ex.Message}");
+                        CreateDefaultTexture();
+                        return;
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"텍스처 '{texture.name}'의 TextureImporter를 찾을 수 없습니다.");
+                    CreateDefaultTexture();
+                    return;
+                }
             }
 
+            // 텍스처 데이터 복사
             try
             {
+                m_linear = !GraphicsFormatUtility.IsSRGBFormat(texture.graphicsFormat);
+                m_wrapMode = texture.wrapMode;
+
                 int count = m_width * m_height;
                 Color[] texturePixels = texture.GetPixels();
                 if (texturePixels.Length != count)
                 {
-                    Debug.LogError("Texture pixel count mismatch.");
+                    Debug.LogError($"텍스처 픽셀 수 불일치: 예상 {count}, 실제 {texturePixels.Length}");
+                    CreateDefaultTexture();
                     return;
                 }
 
                 m_pixels.Slice(0, count).CopyFrom(texturePixels);
             }
-            finally
+            catch (Exception ex)
             {
-                if (textureImporter)
-                {
-                    textureImporter.isReadable = false;
-                    textureImporter.textureType = originalType;
-                    textureImporter.SaveAndReimport();
-                }
+                Debug.LogError($"텍스처 '{texture.name}' 데이터 복사 중 오류 발생: {ex.Message}");
+                CreateDefaultTexture();
             }
         }
 
+// 텍스처 로드 실패 시 기본 텍스처 생성
+        private void CreateDefaultTexture()
+        {
+            // 분홍색 체커보드 패턴으로 기본 텍스처 생성
+            Color pink = new Color(1f, 0f, 1f, 1f);
+            Color black = new Color(0f, 0f, 0f, 1f);
 
+            for (int y = 0; y < m_height; y++)
+            {
+                for (int x = 0; x < m_width; x++)
+                {
+                    Color color = ((x / 8) % 2 == (y / 8) % 2) ? pink : black;
+                    m_pixels[y * m_width + x] = color;
+                }
+            }
+
+            Debug.Log("임시 체커보드 텍스처가 생성되었습니다.");
+        }
     }
-
 }
