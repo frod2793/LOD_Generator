@@ -377,6 +377,17 @@ namespace Unity.HLODSystem.Utils
         
         private void CopyFrom(Texture2D texture)
         {
+            if (texture == null)
+            {
+                Debug.LogWarning("텍스처가 null입니다");
+                return;
+            }
+
+            if (!texture.isReadable)
+            {
+                Debug.LogError($"텍스처 '{texture.name}'에 읽기 권한이 없습니다. 프로젝트 창에서 해당 텍스처를 찾아 Inspector의 Advanced 설정에서 'Read/Write Enabled'를 체크하세요.");
+                return;
+            }
             string assetPath = AssetDatabase.GetAssetPath(texture);
             var assetImporter = AssetImporter.GetAtPath(assetPath);
             var textureImporter = assetImporter as TextureImporter;

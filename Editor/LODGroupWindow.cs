@@ -23,7 +23,7 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
         private List<GameObject> _objectsToSimplify;
         private List<GameObject> _objectsToHLOD;
 
-private UnityEditorInternal.ReorderableList _reorderableList;
+        private UnityEditorInternal.ReorderableList _reorderableList;
 
         private const string _iconPath = "LOD_Generator/Editor/icon.png";
 
@@ -121,6 +121,9 @@ private UnityEditorInternal.ReorderableList _reorderableList;
             GUILayout.Space(10);
 
 
+            Texture_ReadWrite_GUI();
+            GUILayout.Space(10);
+            
             GUILayout.EndVertical();
 
             GUILayout.EndScrollView();
@@ -337,6 +340,46 @@ private UnityEditorInternal.ReorderableList _reorderableList;
                 }
             }
         }
+        // LODGroupWindow 클래스 내부에 다음 메서드를 추가하세요
+        private void Texture_ReadWrite_GUI()
+        {
+            GUILayout.Space(10);
+            GUILayout.Label("텍스처 Read/Write 활성화", EditorStyles.boldLabel);
+    
+            if (GUILayout.Button("선택된 텍스처 Read/Write 활성화", GUILayout.Height(20f), GUILayout.Width(position.width - minuswidth)))
+            {
+                EnableReadWrite();
+            }
+        }
+
+// 텍스처 Read/Write 활성화 메서드
+        private void EnableReadWrite()
+        {
+            Object[] selectedTextures = Selection.GetFiltered(typeof(Texture2D), SelectionMode.Assets);
+    
+            if (selectedTextures.Length == 0)
+            {
+                EditorUtility.DisplayDialog("알림", "텍스처를 먼저 선택해주세요.", "확인");
+                return;
+            }
+    
+            int count = 0;
+            foreach (Texture2D texture in selectedTextures)
+            {
+                string path = AssetDatabase.GetAssetPath(texture);
+                TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        
+                if (!importer.isReadable)
+                {
+                    importer.isReadable = true;
+                    importer.SaveAndReimport();
+                    count++;
+                }
+            }
+    
+            EditorUtility.DisplayDialog("완료", $"{count}개 텍스처의 Read/Write 활성화 완료", "확인");
+        }
     }
+    
 }
 #endif
