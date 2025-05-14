@@ -63,7 +63,9 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
             _hSliderValue = 1f;
             _objectSelected = false;
             _objectsToSimplify = new List<GameObject>();
-            GetWindow(typeof(LODGroupWindow));
+            var window = GetWindow<LODGroupWindow>(true, "LOD Generator", true);
+            window.Focus();
+    
             minSize = new Vector2(600, 800f);
             maxSize = new Vector2(1200, 1600f);
 

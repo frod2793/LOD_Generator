@@ -383,31 +383,38 @@ namespace Unity.HLODSystem.Utils
                 return;
             }
 
-            if (!texture.isReadable)
-            {
-                Debug.LogError($"텍스처 '{texture.name}'에 읽기 권한이 없습니다. 프로젝트 창에서 해당 텍스처를 찾아 Inspector의 Advanced 설정에서 'Read/Write Enabled'를 체크하세요.");
-                return;
-            }
             string assetPath = AssetDatabase.GetAssetPath(texture);
             var assetImporter = AssetImporter.GetAtPath(assetPath);
             var textureImporter = assetImporter as TextureImporter;
             TextureImporterType originalType = TextureImporterType.Default;
+            bool originalReadable = false;
+
+            if (!texture.isReadable)
+            {
+                if (textureImporter != null)
+                {
+                    // 원래 설정 저장
+                    originalReadable = textureImporter.isReadable;
+                    originalType = textureImporter.textureType;
+            
+                    Debug.Log($"텍스처 '{texture.name}'에 읽기 권한이 없습니다. 자동으로 권한을 설정하고 재시도합니다...");
+            
+                    // 읽기 권한 설정
+                    textureImporter.isReadable = true;
+                    textureImporter.SaveAndReimport();
+            
+                    // 텍스처 참조 다시 가져오기 (reimport 후에 필요할 수 있음)
+                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+                }
+                else
+                {
+                    Debug.LogError($"텍스처 '{texture.name}'에 읽기 권한이 없으며 TextureImporter를 찾을 수 없습니다.");
+                    return;
+                }
+            }
 
             m_linear = !GraphicsFormatUtility.IsSRGBFormat(texture.graphicsFormat);
             m_wrapMode = texture.wrapMode;
-
-            if (textureImporter)
-            {
-                originalType = textureImporter.textureType;
-                textureImporter.isReadable = true;
-                textureImporter.textureType = TextureImporterType.Default;
-                textureImporter.SaveAndReimport();
-            }
-            else
-            {
-                Debug.LogError("Failed to get TextureImporter for texture: " + texture.name);
-                return;
-            }
 
             try
             {
@@ -423,15 +430,15 @@ namespace Unity.HLODSystem.Utils
             }
             finally
             {
-                if (textureImporter)
+                // 필요한 경우 원래 상태로 복원
+                if (textureImporter != null && !originalReadable)
                 {
-                    textureImporter.isReadable = false;
+                    textureImporter.isReadable = originalReadable;
                     textureImporter.textureType = originalType;
                     textureImporter.SaveAndReimport();
                 }
             }
         }
-
 
     }
 
