@@ -15,11 +15,13 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
         
         private static void ShowLODGroupWindow()
         {
-            var popUp = CreateInstance<LODGroupWindow>();
-            popUp.position = new Rect(Screen.width / 2.0f, Screen.height / 2.0f, 250, 100);
-            popUp.minSize = new Vector2(600, 800); 
-            popUp.maxSize = new Vector2(1200, 1600); 
-            popUp.ShowPopup();
+            var popUp = EditorWindow.GetWindow<LODGroupWindow>(true, "LOD Generator", true);
+            float width = 800;
+            float height = 800;
+            popUp.position = new Rect((Screen.currentResolution.width - width) / 2, (Screen.currentResolution.height - height) / 2, width, height);
+            popUp.minSize = new Vector2(width, height); 
+            popUp.maxSize = new Vector2(4000, 4000); 
+            popUp.Show();
         }
     }
 }

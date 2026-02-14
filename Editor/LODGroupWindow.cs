@@ -2,44 +2,89 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using Unity.HLODSystem;
-using Unity.HLODSystem.Utils;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using Plugins.Auto_LOD_Generator.Editor.Core;
+using Unity.HLODSystem;
+using Unity.HLODSystem.Utils;
 using Object = UnityEngine.Object;
-
 
 namespace Plugins.Auto_LOD_Generator.EditorScripts
 {
+    /// <summary>
+    /// [설명]: 프리미엄 UI가 적용된 LOD Generator 에디터 윈도우입니다.
+    /// 카드형 레이아웃과 반응형 UI를 통해 사용자 경험을 극대화합니다.
+    /// </summary>
     public class LODGroupWindow : EditorWindow
     {
-        #region 필드 및 변수
-        private Texture2D _icon;
-        private bool _objectSelected;
-        private bool _isHlodSelected;
-        private float _hSliderValue;
-        private string _objPath;
-        private List<GameObject> _objectsToSimplify;
-        private List<GameObject> _objectsToHlod;
-
-        private ReorderableList _reorderableList;
-
-        private const string IconPath = "LOD_Generator/Editor/icon.png";
-
-        private bool _isColider;
-        private bool _isHlod;
-
-        public string savePath = "Assets/";
-        private float _minuswidth = 7f;
-        private Vector2 _scrollPosition = Vector2.zero;
+        #region 에디터 설정
+        private const string k_IconFileName = "icon.png";
+        private const float k_MinWindowWidth = 800f;
+        private const float k_MinWindowHeight = 850f;
         #endregion
 
-        #region Unity 에디터 이벤트
+        #region 내부 변수
+        private Texture2D m_icon;
+        private Vector2 m_scrollPosition = Vector2.zero;
+        private ReorderableList m_reorderableList;
+        private LODGeneratorViewModel m_viewModel;
+        
+        // UI 보조 상태
+        private bool m_isHlodSelected;
+        private List<GameObject> m_objectsToHlod;
+        #endregion
+
+        #region 유니티 생명주기
         private void OnEnable()
+        {
+            InitializeViewModel();
+            LoadIcon();
+            SetupReorderableList();
+
+            minSize = new Vector2(k_MinWindowWidth, k_MinWindowHeight);
+        }
+
+        private void OnGUI()
+        {
+            LODGeneratorStyles.InitializeStyles();
+            
+            if (m_viewModel == null)
+            {
+                InitializeViewModel();
+            }
+
+            DrawHeader();
+
+            m_scrollPosition = GUILayout.BeginScrollView(m_scrollPosition, false, false);
+            GUILayout.BeginVertical(GUILayout.ExpandHeight(true));
+
+            DrawStatusPanel();
+            DrawPathSection();
+            DrawSettingsSection();
+            DrawTargetListSection();
+            DrawHLODSection();
+
+            GUILayout.EndVertical();
+            GUILayout.EndScrollView();
+
+            DrawFooter();
+        }
+
+        private void OnFocus() => Repaint();
+        private void OnInspectorUpdate() => Repaint();
+        #endregion
+
+        #region 초기화 및 바인딩 로직
+        private void InitializeViewModel()
+        {
+            ILODService lodService = new LODService();
+            m_viewModel = new LODGeneratorViewModel(lodService);
+        }
+
+        private void LoadIcon()
         {
             MonoScript script = MonoScript.FromScriptableObject(this);
             string scriptPath = AssetDatabase.GetAssetPath(script);
@@ -47,489 +92,339 @@ namespace Plugins.Auto_LOD_Generator.EditorScripts
             if (!string.IsNullOrEmpty(scriptPath))
             {
                 string scriptDirectory = Path.GetDirectoryName(scriptPath);
-                string iconRelativePath = "icon.png";
-                string fullIconPath = Path.Combine(scriptDirectory, iconRelativePath).Replace('\\', '/');
-                _icon = AssetDatabase.LoadAssetAtPath<Texture2D>(fullIconPath);
-
-                if (_icon == null)
-                {
-                    Debug.LogWarning($"LODGroupWindow 아이콘 로드 실패: {fullIconPath}. 아이콘 파일 위치를 확인하세요.");
-                }
+                string fullIconPath = Path.Combine(scriptDirectory, k_IconFileName).Replace('\\', '/');
+                m_icon = AssetDatabase.LoadAssetAtPath<Texture2D>(fullIconPath);
             }
-            else
+        }
+
+        private void SetupReorderableList()
+        {
+            List<GameObject> uiList = m_viewModel.TargetObjects as List<GameObject>;
+
+            m_reorderableList = new ReorderableList(uiList, typeof(GameObject), true, false, true, true)
             {
-                Debug.LogError("LODGroupWindow 스크립트 경로를 찾을 수 없습니다.");
-            }
-
-            _hSliderValue = 1f;
-            _objectSelected = false;
-            _objectsToSimplify = new List<GameObject>();
-            var window = GetWindow<LODGroupWindow>(true, "LOD Generator", true);
-            window.Focus();
-
-            minSize = new Vector2(600, 800f);
-            maxSize = new Vector2(1200, 1600f);
-
-            _reorderableList = new ReorderableList(_objectsToSimplify, typeof(GameObject), true, true, true, true)
-            {
-                drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Drag and Drop Objects"),
+                drawHeaderCallback = rect => GUI.Label(rect, "대상 오브젝트 리스트 (Target Objects)", EditorStyles.miniBoldLabel),
                 drawElementCallback = (rect, index, isActive, isFocused) =>
                 {
-                    _objectsToSimplify[index] = (GameObject)EditorGUI.ObjectField(
+                    rect.y += 2;
+                    uiList[index] = (GameObject)EditorGUI.ObjectField(
                         new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
-                        _objectsToSimplify[index], typeof(GameObject), true);
+                        uiList[index], typeof(GameObject), true);
                 },
-                onAddCallback = list => { _objectsToSimplify.Add(null); }
+                onAddCallback = list => { uiList.Add(null); },
+                elementHeight = EditorGUIUtility.singleLineHeight + 4
             };
         }
-
-        private void OnGUI()
-        {
-            _scrollPosition = GUILayout.BeginScrollView(
-                _scrollPosition,
-                false,
-                true,
-                GUILayout.Width(position.width),
-                GUILayout.Height(position.height)
-            );
-
-            GUILayout.BeginVertical();
-
-            SelectPath_Btn_GUI();
-            GUILayout.Space(10);
-
-            Toggle_Colider_GUI();
-            GUILayout.Space(10);
-
-            // 오브젝트가 선택된 경우에만 LOD 설정 및 생성 버튼 표시
-            if (_objectSelected)
-            {
-                ObjectSelected_GUI();
-                GUILayout.Space(10);
-            }
-
-            Select_Object_from_File_Btn_GUI();
-            GUILayout.Space(10);
-
-            List_Clear_Btn_GUI();
-            GUILayout.Space(20);
-
-            Drag_And_Drop_GUI();
-            GUILayout.Space(10);
-
-            GetHLOD_GameObjects();
-            GUILayout.Space(10);
-
-
-            GUILayout.EndVertical();
-
-            GUILayout.EndScrollView();
-        }
-
-        private void OnFocus()
-        {
-            // 창이 포커스를 얻을 때마다 최상단으로 가져옴
-            Repaint();
-        }
-
-        private void OnInspectorUpdate()
-        {
-            Repaint();
-        }
         #endregion
 
-        #region UI 메서드
-        /// <summary>
-        /// 저장경로 선택 버튼
-        /// </summary>
-        private void SelectPath_Btn_GUI()
+        #region UI 컴포넌트 드로잉
+        private void DrawHeader()
         {
-            GUILayout.BeginVertical();
-            GUILayout.Box(_icon, GUILayout.Height(140f), GUILayout.Width(140f));
-            if (GUILayout.Button("Select Save Path", GUILayout.Height(20f),
-                    GUILayout.Width(position.width - _minuswidth)))
+            GUILayout.BeginHorizontal(LODGeneratorStyles.CardStyle);
+            if (m_icon != null)
             {
-                var selectedPath = EditorUtility.OpenFolderPanel("Select Save Path", Application.dataPath, savePath);
-                if (selectedPath.StartsWith(Application.dataPath))
-                {
-                    savePath = selectedPath.Replace(Application.dataPath, "Assets");
-                }
-                else
-                {
-                    Debug.LogError("The selected path must be within the Assets directory.");
-                }
+                GUILayout.Label(m_icon, GUILayout.Width(64), GUILayout.Height(64));
             }
+            GUILayout.BeginVertical();
+            GUILayout.Label("LOD Generator (LOD 생성기)", LODGeneratorStyles.HeaderStyle);
+            GUILayout.Label("Automated Mesh Simplification & HLOD Integration System (자동 메쉬 단순화 및 HLOD 통합 시스템)", LODGeneratorStyles.SubtitleStyle);
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+        }
 
-            savePath = EditorGUILayout.TextField("Save Path:", savePath, GUILayout.Height(20f),
-                GUILayout.Width(position.width - _minuswidth));
-
+        private void DrawStatusPanel()
+        {
+            GUILayout.BeginVertical(LODGeneratorStyles.CardStyle);
+            GUILayout.Label("System Status (시스템 상태)", LODGeneratorStyles.TitleStyle);
+            
+            string statusPrefix = "Status (상태): ";
+            GUILayout.Label(statusPrefix + m_viewModel.StatusMessage, EditorStyles.miniLabel);
+            
+            // 커스텀 프로그레스 바
+            Rect progressRect = GUILayoutUtility.GetRect(0, 8, LODGeneratorStyles.ProgressBarStyle);
+            GUI.BeginGroup(progressRect, LODGeneratorStyles.ProgressBarStyle);
+            GUI.Box(new Rect(0, 0, progressRect.width * m_viewModel.Progress, progressRect.height), "", LODGeneratorStyles.ProgressBarFillStyle);
+            GUI.EndGroup();
+            
             GUILayout.EndVertical();
         }
 
-        /// <summary>
-        /// HLOD 또는 콜라이더 활성화 토글
-        /// </summary>
-        private void Toggle_Colider_GUI()
+        private void DrawPathSection()
         {
-            GUILayout.Space(20);
-            _isColider = EditorGUILayout.Toggle("Use Colider", _isColider);
-            GUILayout.Space(20);
-            _isHlod = EditorGUILayout.Toggle("Use HLOD", _isHlod);
-        }
-
-        /// <summary>
-        /// 오브젝트가 선택된후 LOD 생성 버튼 과 퀄리티 조절 슬라이더
-        /// </summary>
-        private void ObjectSelected_GUI()
-        {
-            GUILayout.Space(20);
-            EditorGUILayout.LabelField("Quality Factor: ", GUILayout.Height(20f),
-                GUILayout.Width(position.width - _minuswidth));
-            var textFieldVal = float.Parse(EditorGUILayout.TextField(
-                _hSliderValue.ToString(CultureInfo.InvariantCulture), GUILayout.Height(20f),
-                GUILayout.Width(position.width)));
-
-            if (textFieldVal >= 0 && textFieldVal <= 1)
+            GUILayout.BeginVertical(LODGeneratorStyles.CardStyle);
+            GUILayout.Label("Output Settings (출력 설정)", LODGeneratorStyles.TitleStyle);
+            
+            GUILayout.BeginHorizontal();
+            m_viewModel.SavePath = EditorGUILayout.TextField("Save Assets At (애셋 저장 경로):", m_viewModel.SavePath);
+            if (GUILayout.Button("Browse (찾아보기)", GUILayout.Width(110)))
             {
-                _hSliderValue = textFieldVal;
-            }
-            else
-            {
-                Debug.LogError("Quality factor number must be between 0 and 1");
-            }
-
-            _hSliderValue = GUILayout.HorizontalScrollbar(_hSliderValue, 0.01f, 0f, 1f, GUILayout.Height(20f),
-                GUILayout.Width(position.width - _minuswidth));
-            GUILayout.Space(20);
-
-            if (GUILayout.Button("Generate", GUILayout.Height(20f), GUILayout.Width(position.width - _minuswidth)))
-            {
-                foreach (var obj in _objectsToSimplify)
+                string selectedPath = EditorUtility.OpenFolderPanel("Select Save Path (LOD 저장 경로 선택)", Application.dataPath, m_viewModel.SavePath);
+                if (!string.IsNullOrEmpty(selectedPath))
                 {
-                    LODGenerator.Generator(obj, _hSliderValue, savePath, _isColider, _isHlod);
-                }
-            }
-        }
-
-        private void Select_Object_from_File_Btn_GUI()
-        {
-            GUILayout.Space(20);
-            if (GUILayout.Button("Select Object from File", GUILayout.Height(20f),
-                    GUILayout.Width(position.width - _minuswidth)))
-            {
-                _objPath = EditorUtility.OpenFilePanel("Select an FBX object", Application.dataPath, "fbx")
-                    .Replace(Application.dataPath, "");
-
-                if (_objPath.Length != 0)
-                {
-                    _objectSelected = true;
-                    var obj = AssetDatabase.LoadAssetAtPath("Assets/" + _objPath, typeof(GameObject)) as GameObject;
-                    if (obj != null)
+                    if (selectedPath.StartsWith(Application.dataPath))
                     {
-                        _objectsToSimplify.Add(obj);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 리스트 초기화 버튼
-        /// </summary>
-        private void List_Clear_Btn_GUI()
-        {
-            GUILayout.Space(20);
-            if (GUILayout.Button("List Clear", GUILayout.Height(20f), GUILayout.Width(position.width - _minuswidth)))
-            {
-                _objectsToSimplify.Clear();
-                _objectSelected = false;
-                if (_objectsToHlod != null)
-                    _objectsToHlod.Clear();
-            }
-        }
-
-        /// <summary>
-        /// LOD 를 만들 오브젝트를 드래그앤 드랍으로 가져오기
-        /// </summary>
-        private void Drag_And_Drop_GUI()
-        {
-            GUILayout.BeginVertical();
-
-            // 리스트 표시
-            _reorderableList.DoLayoutList();
-
-            // 드래그 앤 드롭 처리
-            var evt = Event.current;
-            if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
-            {
-                // 드래그된 오브젝트가 GameObject인지 확인
-                bool hasValidObjects = DragAndDrop.objectReferences.Any(obj => obj is GameObject);
-
-                // 유효한 오브젝트가 있을 경우만 드래그 허용
-                DragAndDrop.visualMode = hasValidObjects ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
-
-                if (evt.type == EventType.DragPerform && hasValidObjects)
-                {
-                    DragAndDrop.AcceptDrag();
-                    foreach (var draggedObject in DragAndDrop.objectReferences)
-                    {
-                        if (draggedObject is GameObject gameObject)
-                        {
-                            // 중복 오브젝트 확인
-                            if (!_objectsToSimplify.Contains(gameObject))
-                            {
-                                _objectsToSimplify.Add(gameObject);
-                                _objectSelected = true;
-                            }
-                        }
-                    }
-                }
-
-                Event.current.Use();
-            }
-
-            GUILayout.EndVertical();
-        }
-        #endregion
-
-        #region HLOD 관련 메서드
-        /// <summary>
-        /// HLOD 오브젝트 가져오기 버튼과 리스트 보여주기
-        /// </summary>
-        private void GetHLOD_GameObjects()
-        {
-            HLODEditor hlodEditor = CreateInstance<HLODEditor>();
-
-            if (GUILayout.Button("Get HLOD obj", GUILayout.Height(20f), GUILayout.Width(position.width - _minuswidth)))
-            {
-                _objectsToHlod = hlodEditor.GetHLOD_GameObjects();
-            }
-
-            // 가져온 HLOD 오브젝트들을 리스트 보여주기
-            if (_objectsToHlod != null)
-            {
-                foreach (var obj in _objectsToHlod)
-                {
-                    EditorGUILayout.ObjectField(obj, typeof(GameObject), true);
-                }
-
-                if (_objectsToHlod.Count > 0)
-                {
-                    _isHlodSelected = true;
-                }
-            }
-
-            if (_isHlodSelected)
-            {
-                if (GUILayout.Button("텍스처 권한 자동 설정", GUILayout.Height(20f), 
-                        GUILayout.Width(position.width - _minuswidth)))
-                {
-                    if (_objectsToHlod != null && _objectsToHlod.Count > 0)
-                    {
-                        int totalCount = 0;
-                        foreach (var obj in _objectsToHlod)
-                        {
-                            EnableAllTexturesReadWrite(obj);
-                        }
-                        EditorUtility.DisplayDialog("완료", "모든 텍스처의 Read/Write 권한이 설정되었습니다.", "확인");
-                    }
-                }
-                
-                if (GUILayout.Button("GenerateHLod", GUILayout.Height(20f),
-                        GUILayout.Width(position.width - _minuswidth)))
-                {
-                    // _objectsToHlod 리스트가 null이 아니고, 오브젝트가 하나 이상 있는지 확인
-                    if (_objectsToHlod != null && _objectsToHlod.Count > 0)
-                    {
-                        // _objectsToHlod 리스트에 있는 각 오브젝트에 대해 HLOD 생성
-                        foreach (var obj in _objectsToHlod)
-                        {
-                            CoroutineRunner.RunCoroutine(GenerateHLODWithDelay(hlodEditor, obj));
-                        }
+                        m_viewModel.SavePath = selectedPath.Replace(Application.dataPath, "Assets");
                     }
                     else
                     {
-                        // HLOD 오브젝트가 없을 경우 에러 메시지 출력
-                        Debug.LogError("No HLOD objects to generate.");
+                        EditorUtility.DisplayDialog("Warning", "Path must be inside Assets folder.", "OK");
                     }
                 }
             }
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
         }
 
-        /// <summary>
-        /// HLOD 가 생성될시 중복 생성호출을 방지하기 위해 코루틴으로 딜레이를 줌
-        /// </summary>
-        /// <param name="hlodEditor"></param>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        private IEnumerator GenerateHLODWithDelay(HLODEditor hlodEditor, GameObject obj)
+        private void DrawSettingsSection()
         {
-            // HLOD 생성 전 텍스처 권한 자동 설정
-            EnableAllTexturesReadWrite(obj);
-
-            // 텍스처 리임포트 완료를 위한 데이터베이스 새로고침
-            AssetDatabase.Refresh();
-
-            // 텍스처 리임포트가 완료될 시간 확보 (지연 시간)
-            yield return new EditorWaitForSeconds(2.0f);
-
-            // try/catch를 yield return 밖으로 이동
-            try
+            GUILayout.BeginVertical(LODGeneratorStyles.CardStyle);
+            GUILayout.Label("Generation Parameters (생성 파라미터)", LODGeneratorStyles.TitleStyle);
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+            m_viewModel.QualityFactor = EditorGUILayout.Slider("LOD Quality (LOD 품질) (0-1):", m_viewModel.QualityFactor, 0f, 1f);
+            GUILayout.EndVertical();
+            
+            GUILayout.BeginVertical(GUILayout.Width(280));
+            m_viewModel.UseCollider = EditorGUILayout.ToggleLeft("Create Mesh Colliders (메쉬 콜라이더 생성)", m_viewModel.UseCollider);
+            m_viewModel.UseHLOD = EditorGUILayout.ToggleLeft("Integrate HLOD System (HLOD 시스템 통합)", m_viewModel.UseHLOD);
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+            
+            GUILayout.Space(10);
+            
+            if (m_viewModel.TargetObjects.Count > 0)
             {
-                hlodEditor.GenerateHLOD(obj); // HLOD 오브젝트 생성
+                if (GUILayout.Button("GENERATE LODS (LOD 생성 시작)", LODGeneratorStyles.PremiumButtonStyle))
+                {
+                    m_viewModel.GenerateLODs();
+                    AssetDatabase.Refresh();
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"HLOD 생성 중 오류 발생: {ex.Message}");
-                yield break; // 오류 발생 시 코루틴 종료
+                GUI.enabled = false;
+                GUILayout.Button("ADD OBJECTS TO START (시작하려면 오브젝트를 추가하세요)", LODGeneratorStyles.PremiumButtonStyle);
+                GUI.enabled = true;
+            }
+            GUILayout.EndVertical();
+        }
+
+        private void DrawTargetListSection()
+        {
+            GUILayout.BeginVertical(LODGeneratorStyles.CardStyle);
+            GUILayout.Label("Source Models (소스 모델)", LODGeneratorStyles.TitleStyle);
+            
+            m_reorderableList.DoLayoutList();
+
+            DrawDragAndDropArea();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Add from FBX File (FBX 파일에서 추가)", EditorStyles.miniButtonLeft))
+            {
+                string path = EditorUtility.OpenFilePanel("Select FBX (FBX 오브젝트 선택)", Application.dataPath, "fbx");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    string relativePath = path.Replace(Application.dataPath, "Assets");
+                    GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(relativePath);
+                    if (obj != null) m_viewModel.AddTarget(obj);
+                }
+            }
+            if (GUILayout.Button("Clear List (리스트 초기화)", EditorStyles.miniButtonRight))
+            {
+                m_viewModel.ClearTargets();
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+        }
+
+        private void DrawDragAndDropArea()
+        {
+            Event evt = Event.current;
+            
+            // 드래그 중 여부 확인
+            bool isDragging = DragAndDrop.objectReferences.Length > 0;
+            
+            // 사용자의 요청에 따라 "DROP HERE!"를 전면에 배치
+            string label = isDragging ? "DROP NOW! (지금 놓으세요!)" : "DROP HERE! (여기에 놓으세요!)";
+            GUILayout.Box(label, LODGeneratorStyles.DragAndDropAreaStyle, GUILayout.Height(60), GUILayout.ExpandWidth(true));
+            
+            Rect dropArea = GUILayoutUtility.GetLastRect();
+            bool isDraggingOver = dropArea.Contains(evt.mousePosition);
+
+            if (isDraggingOver)
+            {
+                switch (evt.type)
+                {
+                    case EventType.DragUpdated:
+                        bool hasValidObjects = DragAndDrop.objectReferences.Any(obj => obj is GameObject);
+                        DragAndDrop.visualMode = hasValidObjects ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+                        evt.Use();
+                        break;
+
+                    case EventType.DragPerform:
+                        DragAndDrop.AcceptDrag();
+                        foreach (var draggedObject in DragAndDrop.objectReferences)
+                        {
+                            if (draggedObject is GameObject gameObject)
+                            {
+                                m_viewModel.AddTarget(gameObject);
+                            }
+                        }
+                        evt.Use();
+                        break;
+                }
             }
 
-            // try/catch 블록 외부로 yield return 이동
-            yield return new WaitUntil(() => HLODCreator.isCreating == false);
+            // 마우스 이동이나 드래그 상태 변화에 따른 즉각적인 UI 갱신 유도
+            if (evt.type == EventType.MouseMove || evt.type == EventType.DragUpdated)
+            {
+                Repaint();
+            }
+        }
+
+        private void DrawHLODSection()
+        {
+            GUILayout.BeginVertical(LODGeneratorStyles.CardStyle);
+            GUILayout.Label("HLOD Utility (HLOD 유틸리티)", LODGeneratorStyles.TitleStyle);
+
+            if (GUILayout.Button("Fetch Active HLOD GameObjects (활성 HLOD 오브젝트 가져오기)", EditorStyles.miniButton))
+            {
+                HLODEditor hlodEditor = CreateInstance<HLODEditor>();
+                m_objectsToHlod = hlodEditor.GetHLOD_GameObjects();
+                m_isHlodSelected = m_objectsToHlod != null && m_objectsToHlod.Count > 0;
+                DestroyImmediate(hlodEditor);
+            }
+
+            if (m_isHlodSelected && m_objectsToHlod != null)
+            {
+                GUILayout.Space(5);
+                foreach (var obj in m_objectsToHlod)
+                {
+                    if (obj != null) EditorGUILayout.ObjectField(obj, typeof(GameObject), true);
+                }
+
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Enable Read/Write (Textures) (읽기/쓰기 권한 활성화 (텍스처))", EditorStyles.miniButtonLeft))
+                {
+                    EnableAllTexturesReadWriteForList(m_objectsToHlod);
+                }
+                if (GUILayout.Button("GENERATE HLOD (HLOD 생성)", EditorStyles.miniButtonRight))
+                {
+                    ExecuteHLODGeneration();
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
+        }
+
+        private void DrawFooter()
+        {
+            GUILayout.BeginHorizontal(EditorStyles.toolbar);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Close Window (창 닫기)", EditorStyles.toolbarButton))
+            {
+                Close();
+            }
+            GUILayout.EndHorizontal();
         }
         #endregion
 
-        #region 텍스처 처리 메서드
-     
-
-        // 텍스처 Read/Write 활성화 메서드
-        private void EnableReadWrite()
+        #region 비즈니스 로직 (View 전용)
+        private void ExecuteHLODGeneration()
         {
-            Object[] selectedTextures = Selection.GetFiltered(typeof(Texture2D), SelectionMode.Assets);
+            if (m_objectsToHlod == null || m_objectsToHlod.Count == 0) return;
 
-            if (selectedTextures.Length == 0)
+            HLODEditor hlodEditor = CreateInstance<HLODEditor>();
+            foreach (var obj in m_objectsToHlod)
             {
-                EditorUtility.DisplayDialog("알림", "텍스처를 먼저 선택해주세요.", "확인");
-                return;
-            }
-
-            int count = 0;
-            foreach (Texture2D texture in selectedTextures)
-            {
-                string path = AssetDatabase.GetAssetPath(texture);
-                TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
-
-                if (!importer.isReadable)
-                {
-                    importer.isReadable = true;
-                    importer.SaveAndReimport();
-                    count++;
-                }
-            }
-
-            EditorUtility.DisplayDialog("완료", $"{count}개 텍스처의 Read/Write 활성화 완료", "확인");
-        }
-
-       private void EnableAllTexturesReadWrite(GameObject rootObject)
-{
-    List<Material> allMaterials = new List<Material>();
-    HashSet<string> processedTexturePaths = new HashSet<string>();
-    int count = 0;
-
-    // 모든 MeshRenderer에서 재질 수집
-    MeshRenderer[] meshRenderers = rootObject.GetComponentsInChildren<MeshRenderer>(true);
-    foreach (MeshRenderer renderer in meshRenderers)
-    {
-        if (renderer.sharedMaterials != null)
-        {
-            foreach (Material mat in renderer.sharedMaterials)
-            {
-                if (mat != null && !allMaterials.Contains(mat))
-                {
-                    allMaterials.Add(mat);
-                }
+                if (obj == null) continue;
+                CoroutineRunner.RunCoroutine(GenerateHLODWithDelay(hlodEditor, obj));
             }
         }
-    }
 
-    // 각 재질의 텍스처 가져오기 및 처리
-    foreach (Material material in allMaterials)
-    {
-        Shader shader = material.shader;
-        if (shader == null) continue;
-
-        int propertyCount = ShaderUtil.GetPropertyCount(shader);
-
-        for (int i = 0; i < propertyCount; i++)
+        private IEnumerator GenerateHLODWithDelay(HLODEditor hlodEditor, GameObject obj)
         {
+            EnableAllTexturesReadWrite(obj);
+            AssetDatabase.Refresh();
+
+            yield return new EditorWaitForSeconds(2.0f);
+
             try
             {
-                if (ShaderUtil.GetPropertyType(shader, i) == ShaderUtil.ShaderPropertyType.TexEnv)
-                {
-                    string propertyName = ShaderUtil.GetPropertyName(shader, i);
-                    Texture texture = material.GetTexture(propertyName);
+                hlodEditor.GenerateHLOD(obj);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"HLOD 생성 실패: {ex.Message}");
+                yield break;
+            }
 
-                    if (texture is Texture2D texture2D)
+            yield return new WaitUntil(() => HLODCreator.isCreating == false);
+        }
+
+        private void EnableAllTexturesReadWriteForList(List<GameObject> targets)
+        {
+            foreach (var obj in targets)
+            {
+                if (obj != null) EnableAllTexturesReadWrite(obj);
+            }
+            EditorUtility.DisplayDialog("완료", "모든 텍스처의 Read/Write 권한 설정이 완료되었습니다.", "확인");
+        }
+
+        private void EnableAllTexturesReadWrite(GameObject rootObject)
+        {
+            if (rootObject == null) return;
+
+            HashSet<string> processedPaths = new HashSet<string>();
+            MeshRenderer[] renderers = rootObject.GetComponentsInChildren<MeshRenderer>(true);
+
+            foreach (var renderer in renderers)
+            {
+                if (renderer.sharedMaterials == null) continue;
+
+                foreach (var mat in renderer.sharedMaterials)
+                {
+                    if (mat == null || mat.shader == null) continue;
+
+                    int propCount = ShaderUtil.GetPropertyCount(mat.shader);
+                    for (int i = 0; i < propCount; i++)
                     {
-                        string assetPath = AssetDatabase.GetAssetPath(texture2D);
-                        if (!string.IsNullOrEmpty(assetPath) && !processedTexturePaths.Contains(assetPath))
+                        if (ShaderUtil.GetPropertyType(mat.shader, i) != ShaderUtil.ShaderPropertyType.TexEnv) continue;
+
+                        string propName = ShaderUtil.GetPropertyName(mat.shader, i);
+                        Texture tex = mat.GetTexture(propName);
+
+                        if (tex is Texture2D tex2D)
                         {
-                            processedTexturePaths.Add(assetPath);
-                            TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-                            
-                            if (importer != null)
+                            string path = AssetDatabase.GetAssetPath(tex2D);
+                            if (string.IsNullOrEmpty(path) || processedPaths.Contains(path)) continue;
+
+                            processedPaths.Add(path);
+                            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                            if (importer != null && !importer.isReadable)
                             {
-                                // 패키지 내 텍스처인 경우 처리 방법이 다를 수 있음
-                                bool isPackageTexture = assetPath.StartsWith("Packages/");
-                                
-                                if (!importer.isReadable)
-                                {
-                                    try
-                                    {
-                                        importer.isReadable = true;
-                                        importer.SaveAndReimport();
-                                        count++;
-                                        Debug.Log($"텍스처 '{assetPath}'의 Read/Write 활성화 완료");
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Debug.LogError($"텍스처 '{assetPath}'의 Read/Write 활성화 실패: {ex.Message}");
-                                        
-                                        // 패키지 내 텍스처인 경우 사용자에게 안내
-                                        if (isPackageTexture)
-                                        {
-                                            Debug.LogWarning($"패키지 내 텍스처 '{assetPath}'는 프로젝트 Assets 폴더로 복사 후 사용하세요.");
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    Debug.Log($"텍스처 '{assetPath}'는 이미 Read/Write 활성화됨");
-                                }
+                                importer.isReadable = true;
+                                importer.SaveAndReimport();
                             }
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.LogError($"텍스처 처리 중 오류 발생: {ex.Message}");
-            }
+            AssetDatabase.Refresh();
         }
-    }
-
-    if (count > 0)
-    {
-        Debug.Log($"총 {count}개 텍스처의 Read/Write 권한이 자동으로 활성화되었습니다.");
-        // 텍스처 임포트 완료를 위한 데이터베이스 새로고침
-        AssetDatabase.Refresh();
-    }
-}
         #endregion
     }
 
-    #region 유틸리티 클래스
+    #region 유틸리티
     public class EditorWaitForSeconds : CustomYieldInstruction
     {
-        private double _targetTime;
+        private readonly double m_targetTime;
+        public override bool keepWaiting => EditorApplication.timeSinceStartup < m_targetTime;
 
         public EditorWaitForSeconds(float seconds)
         {
-            _targetTime = EditorApplication.timeSinceStartup + seconds;
-        }
-
-        public override bool keepWaiting
-        {
-            get { return EditorApplication.timeSinceStartup < _targetTime; }
+            m_targetTime = EditorApplication.timeSinceStartup + seconds;
         }
     }
     #endregion

@@ -71,6 +71,8 @@ namespace Unity.HLODSystem.Streaming
         public void Build(SpaceNode rootNode, DisposableList<HLODBuildInfo> infos, GameObject root, 
             float cullDistance, float lodDistance, bool writeNoPrefab, bool extractMaterial, Action<float> onProgress)
         {
+            SetupDefaultValues(m_streamingOptions);
+
             dynamic options = m_streamingOptions;
             string path = options.OutputDirectory;
 
@@ -333,21 +335,17 @@ namespace Unity.HLODSystem.Streaming
         }
 
         static bool showFormat = true;
-        public static void OnGUI(SerializableDynamicObject streamingOptions)
+
+        public static void SetupDefaultValues(SerializableDynamicObject streamingOptions)
         {
-            
             dynamic options = streamingOptions;
 
-#region Setup default values
             if (options.OutputDirectory == null)
             {
-                HLODEditor hlodEditor = new HLODEditor();
-             
-                
-               // string path = Application.dataPath;
-              //  path = "Assets" + path.Substring(Application.dataPath.Length);
+                HLODEditor hlodEditor = ScriptableObject.CreateInstance<HLODEditor>();
                 string path = hlodEditor.GetLocalDirectory();
-                Debug.Log(path);
+                Object.DestroyImmediate(hlodEditor);
+
                 path = path.Replace('\\', '/');
                 if (path.EndsWith("/") == false)
                     path += "/";
@@ -366,7 +364,7 @@ namespace Unity.HLODSystem.Streaming
             {
                 options.AndroidCompression = TextureFormat.ETC2_RGBA8;
             }
-            if (options.iOSCompression== null)
+            if (options.iOSCompression == null)
             {
                 options.iOSCompression = TextureFormat.PVRTC_RGBA4;
             }
@@ -374,7 +372,12 @@ namespace Unity.HLODSystem.Streaming
             {
                 options.tvOSCompression = TextureFormat.ASTC_4x4;
             }
-#endregion
+        }
+
+        public static void OnGUI(SerializableDynamicObject streamingOptions)
+        {
+            SetupDefaultValues(streamingOptions);
+            dynamic options = streamingOptions;
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel("OutputDirectory");
@@ -413,51 +416,8 @@ namespace Unity.HLODSystem.Streaming
 
         public static void OnOneGUI(SerializableDynamicObject streamingOptions)
         {
+            SetupDefaultValues(streamingOptions);
             dynamic options = streamingOptions;
-
-            #region Setup default values
-
-            if (options.OutputDirectory == null)
-            {
-                HLODEditor hlodEditor = new HLODEditor();
-
-
-                // string path = Application.dataPath;
-                //  path = "Assets" + path.Substring(Application.dataPath.Length);
-                string path = hlodEditor.GetLocalDirectory();
-                Debug.Log(path);
-                path = path.Replace('\\', '/');
-                if (path.EndsWith("/") == false)
-                    path += "/";
-                options.OutputDirectory = path;
-            }
-
-            if (options.PCCompression == null)
-            {
-                options.PCCompression = TextureFormat.BC7;
-            }
-
-            if (options.WebGLCompression == null)
-            {
-                options.WebGLCompression = TextureFormat.DXT5;
-            }
-
-            if (options.AndroidCompression == null)
-            {
-                options.AndroidCompression = TextureFormat.ETC2_RGBA8;
-            }
-
-            if (options.iOSCompression == null)
-            {
-                options.iOSCompression = TextureFormat.PVRTC_RGBA4;
-            }
-
-            if (options.tvOSCompression == null)
-            {
-                options.tvOSCompression = TextureFormat.ASTC_4x4;
-            }
-
-            #endregion
 
 
             // options.PCCompression = PopupFormat("PC & Console", (TextureFormat)options.PCCompression);
