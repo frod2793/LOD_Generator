@@ -70,19 +70,19 @@ namespace Unity.HLODSystem
         [InitializeOnLoadMethod]
         static void InitTagTagUtils()
         {
-            if (LayerMask.NameToLayer(HLOD.HLODLayerStr) == -1)
+            if (LayerMask.NameToLayer(HLOD.k_HLODLayerStr) == -1)
             {
-                TagUtils.AddLayer(HLOD.HLODLayerStr);
-                Tools.lockedLayers |= 1 << LayerMask.NameToLayer(HLOD.HLODLayerStr);
+                TagUtils.AddLayer(HLOD.k_HLODLayerStr);
+                Tools.lockedLayers |= 1 << LayerMask.NameToLayer(HLOD.k_HLODLayerStr);
             }
         }
 
         void OnEnable()
         {
-            m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
-            m_LODDistanceProperty = serializedObject.FindProperty("m_LODDistance");
-            m_CullDistanceProperty = serializedObject.FindProperty("m_CullDistance");
-            m_MinObjectSizeProperty = serializedObject.FindProperty("m_MinObjectSize");
+            m_ChunkSizeProperty = serializedObject.FindProperty("m_chunkSize");
+            m_LODDistanceProperty = serializedObject.FindProperty("m_lodDistance");
+            m_CullDistanceProperty = serializedObject.FindProperty("m_cullDistance");
+            m_MinObjectSizeProperty = serializedObject.FindProperty("m_minObjectSize");
 
             m_LODSlider = new LODSlider(true, "Cull");
             m_LODSlider.InsertRange("High", m_LODDistanceProperty);
@@ -388,10 +388,10 @@ namespace Unity.HLODSystem
         {
             HLOD _hlod = hlod.GetComponent<HLOD>();
 
-            m_ChunkSizeProperty = serializedObject.FindProperty("m_ChunkSize");
-            m_LODDistanceProperty = serializedObject.FindProperty("m_LODDistance");
-            m_CullDistanceProperty = serializedObject.FindProperty("m_CullDistance");
-            m_MinObjectSizeProperty = serializedObject.FindProperty("m_MinObjectSize");
+            m_ChunkSizeProperty = serializedObject.FindProperty("m_chunkSize");
+            m_LODDistanceProperty = serializedObject.FindProperty("m_lodDistance");
+            m_CullDistanceProperty = serializedObject.FindProperty("m_cullDistance");
+            m_MinObjectSizeProperty = serializedObject.FindProperty("m_minObjectSize");
 
             m_LODSlider = new LODSlider(true, "Cull");
             m_LODSlider.InsertRange("High", m_LODDistanceProperty);

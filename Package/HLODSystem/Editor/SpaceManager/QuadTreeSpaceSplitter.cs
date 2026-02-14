@@ -45,14 +45,12 @@ namespace Unity.HLODSystem.SpaceManager
                 return;
             }
             
-            dynamic options = spaceSplitterOptions;
-            if(options.LooseSize1 != null)
-                m_looseSizeFromOptions = options.LooseSize;
-            if(options.UseSubHLODTree != null)
-                m_useSubHLODTree = options.UseSubHLODTree;
-            if(options.SubHLODTreeSize != null)
-                m_subHLODTreeSize = options.SubHLODTreeSize;
-            
+            if(spaceSplitterOptions["LooseSize"] != null)
+                m_looseSizeFromOptions = Convert.ToSingle(spaceSplitterOptions["LooseSize"]);
+            if(spaceSplitterOptions["UseSubHLODTree"] != null)
+                m_useSubHLODTree = Convert.ToBoolean(spaceSplitterOptions["UseSubHLODTree"]);
+            if(spaceSplitterOptions["SubHLODTreeSize"] != null)
+                m_subHLODTreeSize = Convert.ToSingle(spaceSplitterOptions["SubHLODTreeSize"]);
         }
 
         public int CalculateSubTreeCount(Bounds bounds)
@@ -341,37 +339,36 @@ namespace Unity.HLODSystem.SpaceManager
             float subHLODTreeSize = 100.0f)
         {
             var dynamicObject = new SerializableDynamicObject();
-            dynamic options = dynamicObject;
 
-            options.AutoCalcLooseSize = autoCalcLooseSize;
-            options.LooseSize = looseSize;
-            options.UseSubHLODTree = useSubHLODTree;
-            options.SubHLODTreeSize = subHLODTreeSize;
+            dynamicObject["AutoCalcLooseSize"] = autoCalcLooseSize;
+            dynamicObject["LooseSize"] = looseSize;
+            dynamicObject["UseSubHLODTree"] = useSubHLODTree;
+            dynamicObject["SubHLODTreeSize"] = subHLODTreeSize;
 
             return dynamicObject;
         }
 
         public static void OnGUI(SerializableDynamicObject spaceSplitterOptions)
         {
-            dynamic options = spaceSplitterOptions;
+            if (spaceSplitterOptions == null) return;
 
             //initialize values
-            if (options.LooseSize == null)
-                options.LooseSize = 5.0f;
-            if (options.UseSubHLODTree == null)
-                options.UseSubHLODTree = false;
-            if (options.SubHLODTreeSize == null)
-                options.SubHLODTreeSize = 100.0f;
+            if (spaceSplitterOptions["LooseSize"] == null)
+                spaceSplitterOptions["LooseSize"] = 5.0f;
+            if (spaceSplitterOptions["UseSubHLODTree"] == null)
+                spaceSplitterOptions["UseSubHLODTree"] = false;
+            if (spaceSplitterOptions["SubHLODTreeSize"] == null)
+                spaceSplitterOptions["SubHLODTreeSize"] = 100.0f;
+
             try
             {
-//Draw UI
-                options.LooseSize = EditorGUILayout.FloatField("Loose size", options.LooseSize);
+                spaceSplitterOptions["LooseSize"] = EditorGUILayout.FloatField("Loose size", Convert.ToSingle(spaceSplitterOptions["LooseSize"]));
+                spaceSplitterOptions["UseSubHLODTree"] = EditorGUILayout.ToggleLeft("Use sub HLOD tree", Convert.ToBoolean(spaceSplitterOptions["UseSubHLODTree"]));
 
-                options.UseSubHLODTree = EditorGUILayout.ToggleLeft("Use sub HLOD tree", options.UseSubHLODTree);
-                if (options.UseSubHLODTree == true)
+                if (Convert.ToBoolean(spaceSplitterOptions["UseSubHLODTree"]) == true)
                 {
                     EditorGUI.indentLevel += 1;
-                    options.SubHLODTreeSize = EditorGUILayout.FloatField("Sub tree size", options.SubHLODTreeSize);
+                    spaceSplitterOptions["SubHLODTreeSize"] = EditorGUILayout.FloatField("Sub tree size", Convert.ToSingle(spaceSplitterOptions["SubHLODTreeSize"]));
                     EditorGUI.indentLevel -= 1;
                 }
             }
@@ -379,8 +376,6 @@ namespace Unity.HLODSystem.SpaceManager
             {
               Debug.Log("Non serializable object");
             }
-            
-
         }
 
         

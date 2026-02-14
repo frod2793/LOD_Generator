@@ -14,50 +14,50 @@ namespace Unity.HLODSystem.Utils
             var matrix = hlodWorldToLocal * colliderLocalToWorld;
 
             WorkingCollider wc = new WorkingCollider();
-            dynamic parameters = wc.Parameters;
+            SerializableDynamicObject parameters = wc.Parameters;
 
             wc.Type = collider.GetType().Name;
             wc.Position = matrix.GetPosition();
             wc.Rotation = matrix.rotation;
             wc.Scale = matrix.lossyScale;
 
-            parameters.Enabled = collider.enabled;
-            parameters.IsTrigger = collider.isTrigger;
-            parameters.ContactOffset = collider.contactOffset;
+            parameters["Enabled"] = collider.enabled;
+            parameters["IsTrigger"] = collider.isTrigger;
+            parameters["ContactOffset"] = collider.contactOffset;
 
             if (collider is BoxCollider boxCollider)
             {
-                parameters.SizeX = boxCollider.size.x;
-                parameters.SizeY = boxCollider.size.y;
-                parameters.SizeZ = boxCollider.size.z;
-                parameters.CenterX = boxCollider.center.x;
-                parameters.CenterY = boxCollider.center.y;
-                parameters.CenterZ = boxCollider.center.z;
+                parameters["SizeX"] = boxCollider.size.x;
+                parameters["SizeY"] = boxCollider.size.y;
+                parameters["SizeZ"] = boxCollider.size.z;
+                parameters["CenterX"] = boxCollider.center.x;
+                parameters["CenterY"] = boxCollider.center.y;
+                parameters["CenterZ"] = boxCollider.center.z;
             }
             else if (collider is MeshCollider meshCollider)
             {
-                parameters.SharedMeshPath = ObjectUtils.ObjectToPath(meshCollider.sharedMesh);
-                parameters.Convex = meshCollider.convex;
+                parameters["SharedMeshPath"] = ObjectUtils.ObjectToPath(meshCollider.sharedMesh);
+                parameters["Convex"] = meshCollider.convex;
             }
             else if (collider is SphereCollider sphereCollider)
             {
-                parameters.CenterX = sphereCollider.center.x;
-                parameters.CenterY = sphereCollider.center.y;
-                parameters.CenterZ = sphereCollider.center.z;
-                parameters.Radius = sphereCollider.radius;
+                parameters["CenterX"] = sphereCollider.center.x;
+                parameters["CenterY"] = sphereCollider.center.y;
+                parameters["CenterZ"] = sphereCollider.center.z;
+                parameters["Radius"] = sphereCollider.radius;
             }
             else if (collider is CapsuleCollider capsuleCollider)
             {
-                parameters.CenterX = capsuleCollider.center.x;
-                parameters.CenterY = capsuleCollider.center.y;
-                parameters.CenterZ = capsuleCollider.center.z;
-                parameters.Radius = capsuleCollider.radius;
-                parameters.Height = capsuleCollider.height;
-                parameters.Direction = capsuleCollider.direction;
+                parameters["CenterX"] = capsuleCollider.center.x;
+                parameters["CenterY"] = capsuleCollider.center.y;
+                parameters["CenterZ"] = capsuleCollider.center.z;
+                parameters["Radius"] = capsuleCollider.radius;
+                parameters["Height"] = capsuleCollider.height;
+                parameters["Direction"] = capsuleCollider.direction;
             }
             else if (collider is TerrainCollider terrainCollider)
             {
-                parameters.TerrainData = GUIDUtils.ObjectToGUID(terrainCollider.terrainData);
+                parameters["TerrainData"] = GUIDUtils.ObjectToGUID(terrainCollider.terrainData);
             }
             else
             {

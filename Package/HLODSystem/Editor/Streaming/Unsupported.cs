@@ -73,8 +73,8 @@ namespace Unity.HLODSystem.Streaming
         {
             SetupDefaultValues(m_streamingOptions);
 
-            dynamic options = m_streamingOptions;
-            string path = options.OutputDirectory;
+            SerializableDynamicObject options = m_streamingOptions;
+            string path = options["OutputDirectory"] as string;
 
             HLODTreeNodeContainer container = new HLODTreeNodeContainer();
             HLODTreeNode convertedRootNode = ConvertNode(container, rootNode);
@@ -83,11 +83,11 @@ namespace Unity.HLODSystem.Streaming
                 onProgress(0.0f);
 
             HLODData.TextureCompressionData compressionData;
-            compressionData.PCTextureFormat = options.PCCompression;
-            compressionData.WebGLTextureFormat = options.WebGLCompression;
-            compressionData.AndroidTextureFormat = options.AndroidCompression;
-            compressionData.iOSTextureFormat = options.iOSCompression;
-            compressionData.tvOSTextureFormat = options.tvOSCompression;
+            compressionData.PCTextureFormat = (TextureFormat)options["PCCompression"];
+            compressionData.WebGLTextureFormat = (TextureFormat)options["WebGLCompression"];
+            compressionData.AndroidTextureFormat = (TextureFormat)options["AndroidCompression"];
+            compressionData.iOSTextureFormat = (TextureFormat)options["iOSCompression"];
+            compressionData.tvOSTextureFormat = (TextureFormat)options["tvOSCompression"];
             
             string filename = $"{path}{root.name}.hlod";
 
@@ -338,9 +338,9 @@ namespace Unity.HLODSystem.Streaming
 
         public static void SetupDefaultValues(SerializableDynamicObject streamingOptions)
         {
-            dynamic options = streamingOptions;
+            if (streamingOptions == null) return;
 
-            if (options.OutputDirectory == null)
+            if (streamingOptions["OutputDirectory"] == null)
             {
                 HLODEditor hlodEditor = ScriptableObject.CreateInstance<HLODEditor>();
                 string path = hlodEditor.GetLocalDirectory();
@@ -349,39 +349,39 @@ namespace Unity.HLODSystem.Streaming
                 path = path.Replace('\\', '/');
                 if (path.EndsWith("/") == false)
                     path += "/";
-                options.OutputDirectory = path;
+                streamingOptions["OutputDirectory"] = path;
             }
 
-            if (options.PCCompression == null)
+            if (streamingOptions["PCCompression"] == null)
             {
-                options.PCCompression = TextureFormat.BC7;
+                streamingOptions["PCCompression"] = TextureFormat.BC7;
             }
-            if (options.WebGLCompression == null)
+            if (streamingOptions["WebGLCompression"] == null)
             {
-                options.WebGLCompression = TextureFormat.DXT5;
+                streamingOptions["WebGLCompression"] = TextureFormat.DXT5;
             }
-            if (options.AndroidCompression == null)
+            if (streamingOptions["AndroidCompression"] == null)
             {
-                options.AndroidCompression = TextureFormat.ETC2_RGBA8;
+                streamingOptions["AndroidCompression"] = TextureFormat.ETC2_RGBA8;
             }
-            if (options.iOSCompression == null)
+            if (streamingOptions["iOSCompression"] == null)
             {
-                options.iOSCompression = TextureFormat.PVRTC_RGBA4;
+                streamingOptions["iOSCompression"] = TextureFormat.PVRTC_RGBA4;
             }
-            if (options.tvOSCompression == null)
+            if (streamingOptions["tvOSCompression"] == null)
             {
-                options.tvOSCompression = TextureFormat.ASTC_4x4;
+                streamingOptions["tvOSCompression"] = TextureFormat.ASTC_4x4;
             }
         }
 
         public static void OnGUI(SerializableDynamicObject streamingOptions)
         {
             SetupDefaultValues(streamingOptions);
-            dynamic options = streamingOptions;
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel("OutputDirectory");
-            if (GUILayout.Button(options.OutputDirectory))
+            string outputDir = streamingOptions["OutputDirectory"] as string;
+            if (GUILayout.Button(outputDir))
             {
                 string selectPath = EditorUtility.OpenFolderPanel("Select output folder", "Assets", "");
 
@@ -391,7 +391,7 @@ namespace Unity.HLODSystem.Streaming
                     selectPath = selectPath.Replace('\\', '/');
                     if (selectPath.EndsWith("/") == false)
                         selectPath += "/";
-                    options.OutputDirectory = selectPath;
+                    streamingOptions["OutputDirectory"] = selectPath;
                 }
                 else
                 {
@@ -403,28 +403,27 @@ namespace Unity.HLODSystem.Streaming
             if (showFormat = EditorGUILayout.Foldout(showFormat, "Compress Format"))
             {
                 EditorGUI.indentLevel += 1;
-                options.PCCompression = PopupFormat("PC & Console", (TextureFormat)options.PCCompression);
-                options.WebGLCompression = PopupFormat("WebGL", (TextureFormat)options.WebGLCompression);
-                options.AndroidCompression = PopupFormat("Android", (TextureFormat)options.AndroidCompression);
-                options.iOSCompression = PopupFormat("iOS", (TextureFormat)options.iOSCompression);
-                options.tvOSCompression = PopupFormat("tvOS", (TextureFormat)options.tvOSCompression);
+                streamingOptions["PCCompression"] = PopupFormat("PC & Console", (TextureFormat)streamingOptions["PCCompression"]);
+                streamingOptions["WebGLCompression"] = PopupFormat("WebGL", (TextureFormat)streamingOptions["WebGLCompression"]);
+                streamingOptions["AndroidCompression"] = PopupFormat("Android", (TextureFormat)streamingOptions["AndroidCompression"]);
+                streamingOptions["iOSCompression"] = PopupFormat("iOS", (TextureFormat)streamingOptions["iOSCompression"]);
+                streamingOptions["tvOSCompression"] = PopupFormat("tvOS", (TextureFormat)streamingOptions["tvOSCompression"]);
                 EditorGUI.indentLevel -= 1;   
             }
-
         }
 
 
         public static void OnOneGUI(SerializableDynamicObject streamingOptions)
         {
             SetupDefaultValues(streamingOptions);
-            dynamic options = streamingOptions;
+            SerializableDynamicObject options = streamingOptions;
 
 
-            // options.PCCompression = PopupFormat("PC & Console", (TextureFormat)options.PCCompression);
-            // options.WebGLCompression = PopupFormat("WebGL", (TextureFormat)options.WebGLCompression);
-            // options.AndroidCompression = PopupFormat("Android", (TextureFormat)options.AndroidCompression);
-            // options.iOSCompression = PopupFormat("iOS", (TextureFormat)options.iOSCompression);
-            // options.tvOSCompression = PopupFormat("tvOS", (TextureFormat)options.tvOSCompression);
+            // options["PCCompression"] = PopupFormat("PC & Console", (TextureFormat)options["PCCompression"]);
+            // options["WebGLCompression"] = PopupFormat("WebGL", (TextureFormat)options["WebGLCompression"]);
+            // options["AndroidCompression"] = PopupFormat("Android", (TextureFormat)options["AndroidCompression"]);
+            // options["iOSCompression"] = PopupFormat("iOS", (TextureFormat)options["iOSCompression"]);
+            // options["tvOSCompression"] = PopupFormat("tvOS", (TextureFormat)options["tvOSCompression"]);
         }
         
         

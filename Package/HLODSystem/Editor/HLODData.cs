@@ -455,7 +455,7 @@ namespace Unity.HLODSystem
 
             private GameObject CreateBoxCollider()
             {
-                dynamic param = m_parameters;
+                SerializableDynamicObject param = m_parameters;
                 GameObject go = new GameObject("Collider");
                 var col = go.AddComponent<BoxCollider>();
 
@@ -465,12 +465,12 @@ namespace Unity.HLODSystem
 
                 Vector3 size;
                 Vector3 center;
-                size.x = param.SizeX;
-                size.y = param.SizeY;
-                size.z = param.SizeZ;
-                center.x = param.CenterX;
-                center.y = param.CenterY;
-                center.z = param.CenterZ;
+                size.x = Convert.ToSingle(param["SizeX"]);
+                size.y = Convert.ToSingle(param["SizeY"]);
+                size.z = Convert.ToSingle(param["SizeZ"]);
+                center.x = Convert.ToSingle(param["CenterX"]);
+                center.y = Convert.ToSingle(param["CenterY"]);
+                center.z = Convert.ToSingle(param["CenterZ"]);
 
                 col.size = size;
                 col.center = center;
@@ -480,8 +480,8 @@ namespace Unity.HLODSystem
 
             private GameObject CreateMeshCollider()
             {
-                dynamic param = m_parameters;
-                string sharedMeshPath = param.SharedMeshPath;
+                SerializableDynamicObject param = m_parameters;
+                string sharedMeshPath = param["SharedMeshPath"] as string;
                 string mainAssetPath = "";
                 string subAssetName = "";
                 ObjectUtils.ParseObjectPath(sharedMeshPath, out mainAssetPath, out subAssetName);
@@ -516,14 +516,14 @@ namespace Unity.HLODSystem
                     }
                 }
                 
-                col.convex = param.Convex;
+                col.convex = Convert.ToBoolean(param["Convex"]);
 
                 return go;
             }
 
             private GameObject CreateSphereCollider()
             {
-                dynamic param = m_parameters;
+                SerializableDynamicObject param = m_parameters;
                 GameObject go = new GameObject("Collider");
                 var col = go.AddComponent<SphereCollider>();
 
@@ -532,19 +532,19 @@ namespace Unity.HLODSystem
                 go.transform.localScale = m_scale.To();
 
                 Vector3 center;
-                center.x = param.CenterX;
-                center.y = param.CenterY;
-                center.z = param.CenterZ;
+                center.x = Convert.ToSingle(param["CenterX"]);
+                center.y = Convert.ToSingle(param["CenterY"]);
+                center.z = Convert.ToSingle(param["CenterZ"]);
 
                 col.center = center;
-                col.radius = param.Radius;
+                col.radius = Convert.ToSingle(param["Radius"]);
 
                 return go;
             }
 
             private GameObject CreateCapsuleCollider()
             {
-                dynamic param = m_parameters;
+                SerializableDynamicObject param = m_parameters;
                 GameObject go = new GameObject("Collider");
                 var col = go.AddComponent<CapsuleCollider>();
 
@@ -553,14 +553,14 @@ namespace Unity.HLODSystem
                 go.transform.localScale = m_scale.To();
 
                 Vector3 center;
-                center.x = param.CenterX;
-                center.y = param.CenterY;
-                center.z = param.CenterZ;
+                center.x = Convert.ToSingle(param["CenterX"]);
+                center.y = Convert.ToSingle(param["CenterY"]);
+                center.z = Convert.ToSingle(param["CenterZ"]);
 
                 col.center = center;
-                col.radius = param.Radius;
-                col.height = param.Height;
-                col.direction = param.Direction;
+                col.radius = Convert.ToSingle(param["Radius"]);
+                col.height = Convert.ToSingle(param["Height"]);
+                col.direction = Convert.ToInt32(param["Direction"]);
 
                 return go;
             }

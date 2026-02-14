@@ -11,8 +11,8 @@ namespace Unity.HLODSystem
     {
         class Styles
         {
-            public const float kSingleLineHeight = 18.0f;
-            public const float kSpacing = 5;
+            public const float k_SingleLineHeight = 18.0f;
+            public const float k_Spacing = 5;
             public readonly GUIContent meshSettingHeader = new GUIContent("Mesh settings");
             public readonly GUIContent meshRenderersHeader = new GUIContent("Mesh renderers");
         }
@@ -42,7 +42,7 @@ namespace Unity.HLODSystem
             }
             private void DrawHeaderCallback(Rect rect)
             {
-                EditorGUI.LabelField(rect, styles.meshRenderersHeader);
+                EditorGUI.LabelField(rect, s_styles.meshRenderersHeader);
             }
             private void DrawElementCallback(Rect rect, int index, bool isactive, bool isfocused)
             {
@@ -71,7 +71,7 @@ namespace Unity.HLODSystem
             }
             private float ElementHeightCallback(int index)
             {
-                return Styles.kSingleLineHeight;
+                return Styles.k_SingleLineHeight;
             }
             private void OnAddCallback(ReorderableList list)
             {
@@ -84,26 +84,26 @@ namespace Unity.HLODSystem
 
             public void Draw(Rect rect, int index)
             {
-                rect.height = Styles.kSingleLineHeight;
+                rect.height = Styles.k_SingleLineHeight;
             
                 m_property.isExpanded = EditorGUI.Foldout(rect, m_property.isExpanded, "HLOD Group " + index);
                 if (m_property.isExpanded)
                 {
-                    rect.y += Styles.kSingleLineHeight + Styles.kSpacing;
+                    rect.y += Styles.k_SingleLineHeight + Styles.k_Spacing;
                     EditorGUI.PropertyField(rect, m_targetLevelProperty);
                     
-                    rect.y += Styles.kSingleLineHeight + Styles.kSpacing;
+                    rect.y += Styles.k_SingleLineHeight + Styles.k_Spacing;
                     m_meshRendererList.DoList(rect);
                 }
             }
 
             public float GetHeight()
             {
-                return m_meshRendererList.GetHeight() + Styles.kSingleLineHeight * 2 + Styles.kSpacing;
+                return m_meshRendererList.GetHeight() + Styles.k_SingleLineHeight * 2 + Styles.k_Spacing;
             }
         }
 
-        private static Styles styles;
+        private static Styles s_styles;
         
         private SerializedProperty m_meshSettingsProperty;
         private SerializedProperty m_removeAtBuildProperty;
@@ -146,17 +146,17 @@ namespace Unity.HLODSystem
             var prop = m_meshSettingsProperty.GetArrayElementAtIndex(index);
             if (prop.isExpanded)
             {
-                return m_meshSettingGroupList[index].GetHeight() + Styles.kSpacing;
+                return m_meshSettingGroupList[index].GetHeight() + Styles.k_Spacing;
             }
             else
             {
-                return Styles.kSingleLineHeight;
+                return Styles.k_SingleLineHeight;
             }
         }
  
         private void DrawHeaderMeshSetting(Rect rect)
         {
-            GUI.Label(rect, styles.meshSettingHeader);
+            GUI.Label(rect, s_styles.meshSettingHeader);
         }
         private void DrawElementMeshSetting(Rect rect, int index, bool isactive, bool isfocused)
         {
@@ -179,9 +179,9 @@ namespace Unity.HLODSystem
 
         public override void OnInspectorGUI()
         {
-            if (styles == null)
+            if (s_styles == null)
             {
-                styles = new Styles();
+                s_styles = new Styles();
             }
             
             serializedObject.Update();

@@ -818,11 +818,15 @@ namespace Unity.HLODSystem
             {
                 return 1;
             }
-            dynamic options = m_hlod.SimplifierOptions;
+            SerializableDynamicObject options = m_hlod.SimplifierOptions;
+            if (options == null)
+            {
+                return 1;
+            }
             
-            int maxPolygonCount = options.SimplifyMaxPolygonCount;
-            int minPolygonCount = options.SimplifyMinPolygonCount;
-            float polygonRatio = options.SimplifyPolygonRatio;
+            int maxPolygonCount = Convert.ToInt32(options["SimplifyMaxPolygonCount"]);
+            int minPolygonCount = Convert.ToInt32(options["SimplifyMinPolygonCount"]);
+            float polygonRatio = Convert.ToSingle(options["SimplifyPolygonRatio"]);
             int triangleCount = (heightmap.Width - 1) * (heightmap.Height - 1) * 2;
 
             float maxQuality = Mathf.Min((float) maxPolygonCount / (float) triangleCount, polygonRatio);

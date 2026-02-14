@@ -100,7 +100,7 @@ namespace Unity.HLODSystem
                 PrefabUtility.UnpackPrefabInstance(m_instantiatePrefab, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
                 m_instantiatePrefab.hideFlags = HideFlags.HideAndDontSave;
 
-                int layer = LayerMask.NameToLayer(HLOD.HLODLayerStr);
+                int layer = LayerMask.NameToLayer(HLOD.k_HLODLayerStr);
                 if ( layer >= 0 && layer <= 31)
                     ChangeLayersRecursively(m_instantiatePrefab.transform, layer);
 

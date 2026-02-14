@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace Unity.HLODSystem
 {
+    /// <summary>
+    /// [설명]: 유니티 인스펙터에서 직렬화 가능한 동적 객체(DynamicObject) 구현체입니다.
+    /// 런타임에 유연하게 속성을 추가하거나 관리할 수 있으며, 에디터 상에서의 직렬화를 지원합니다.
+    /// </summary>
     [Serializable]
     public class SerializableDynamicObject : DynamicObject, ISerializationCallbackReceiver
     {
@@ -55,46 +59,64 @@ namespace Unity.HLODSystem
         }
 
         [SerializeField]
-        private List<JsonSerializedData> m_SerializeItems = new List<JsonSerializedData>();
+        private List<JsonSerializedData> m_serializeItems = new List<JsonSerializedData>();
 
-        private Dictionary<string, object> m_DynamicContext = new Dictionary<string, object>();
+        /// <summary>
+        /// [설명]: 런타임 동적 데이터를 저장하는 딕셔너리입니다.
+        /// </summary>
+        private Dictionary<string, object> m_dynamicContext = new Dictionary<string, object>();
 
         public bool ContainsKey(string key)
         {            
-            return m_DynamicContext.ContainsKey(key);
+            return m_dynamicContext.ContainsKey(key);
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            if (m_DynamicContext.ContainsKey(binder.Name) == false)
+            if (m_dynamicContext.ContainsKey(binder.Name) == false)
             {
-                m_DynamicContext.Add(binder.Name, value);
+                m_dynamicContext.Add(binder.Name, value);
             }
             else
             {
-                m_DynamicContext[binder.Name] = value;
+                m_dynamicContext[binder.Name] = value;
             }
 
             return true;
+        }
+
+        public object this[string key]
+        {
+            get
+            {
+                if (m_dynamicContext.TryGetValue(key, out object result))
+                    return result;
+                return null;
+            }
+            set
+            {
+                if (m_dynamicContext.ContainsKey(key))
+                    m_dynamicContext[key] = value;
+                else
+                    m_dynamicContext.Add(key, value);
+            }
         }
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            if (m_DynamicContext.TryGetValue(binder.Name, out result) == false)
+            if (m_dynamicContext.TryGetValue(binder.Name, out result))
             {
-                result = null;
-                m_DynamicContext.Add(binder.Name, null);
+                return true;
             }
 
-            return true;
+            return false;
         }
-        
 
         public void OnBeforeSerialize()
         {
-            m_SerializeItems.Clear();
+            m_serializeItems.Clear();
                 
-            foreach (var pair in m_DynamicContext)
+            foreach (var pair in m_dynamicContext)
             {
                 if (pair.Value == null)
                     continue;
@@ -115,32 +137,32 @@ namespace Unity.HLODSystem
                 data.Type = item.GetType().AssemblyQualifiedName;
                 data.Data = JsonUtility.ToJson(item);
 
-                m_SerializeItems.Add(data);
+                m_serializeItems.Add(data);
 
             }
         }
 
         public void OnAfterDeserialize()
         {
-            m_DynamicContext.Clear();
+            m_dynamicContext.Clear();
 
-            for (int i = 0; i < m_SerializeItems.Count; ++i)
+            for (int i = 0; i < m_serializeItems.Count; ++i)
             {
-                if (string.IsNullOrEmpty(m_SerializeItems[i].Type))
+                if (string.IsNullOrEmpty(m_serializeItems[i].Type))
                     continue;
 
-                Type type = Type.GetType(m_SerializeItems[i].Type);
+                Type type = Type.GetType(m_serializeItems[i].Type);
                 if (type == null)
                     continue;
 
-                var data = JsonUtility.FromJson(m_SerializeItems[i].Data, type) as ISerializeItem;
+                var data = JsonUtility.FromJson(m_serializeItems[i].Data, type) as ISerializeItem;
                 if (data == null)
                     continue;
 
-                m_DynamicContext.Add(data.GetName(), data.GetData());
+                m_dynamicContext.Add(data.GetName(), data.GetData());
             }
 
-            m_SerializeItems.Clear();
+            m_serializeItems.Clear();
         }
 
         public SerializableDynamicObject()

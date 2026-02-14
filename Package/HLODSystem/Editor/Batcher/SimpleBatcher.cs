@@ -48,7 +48,7 @@ namespace Unity.HLODSystem
 
         public void Batch(Transform rootTransform, DisposableList<HLODBuildInfo> targets, Action<float> onProgress)
         {
-            dynamic options = m_batcherOptions;
+            SerializableDynamicObject options = m_batcherOptions;
             if (onProgress != null)
                 onProgress(0.0f);
 
@@ -78,12 +78,12 @@ namespace Unity.HLODSystem
             private bool m_enableTintColor;
             private string m_tintColorName;
             
-            public MaterialTextureCache(dynamic options)
+            public MaterialTextureCache(SerializableDynamicObject options)
             {
                 m_defaultTextures = CreateDefaultTextures();
-                m_enableTintColor = options.EnableTintColor;
-                m_tintColorName = options.TintColorName;
-                m_textureInfoList = options.TextureInfoList;
+                m_enableTintColor = Convert.ToBoolean(options["EnableTintColor"]);
+                m_tintColorName = options["TintColorName"] as string;
+                m_textureInfoList = options["TextureInfoList"] as List<TextureInfo>;
                 m_textureCache = new DisposableDictionary<string, TexturePacker.MaterialTexture>();
             }
             public TexturePacker.MaterialTexture GetMaterialTextures(WorkingMaterial material)
@@ -184,9 +184,9 @@ namespace Unity.HLODSystem
 
         }
 
-        private void PackingTexture(TexturePacker packer, DisposableList<HLODBuildInfo> targets, dynamic options, Action<float> onProgress)
+        private void PackingTexture(TexturePacker packer, DisposableList<HLODBuildInfo> targets, SerializableDynamicObject options, Action<float> onProgress)
         { 
-            List<TextureInfo> textureInfoList = options.TextureInfoList;
+            List<TextureInfo> textureInfoList = options["TextureInfoList"] as List<TextureInfo>;
             using (MaterialTextureCache cache = new MaterialTextureCache(options))
             {
                 for (int i = 0; i < targets.Count; ++i)
@@ -195,11 +195,11 @@ namespace Unity.HLODSystem
                     Dictionary<Guid, TexturePacker.MaterialTexture> textures =
                         new Dictionary<Guid, TexturePacker.MaterialTexture>();
 
-                    for (int oi = 0; oi < workingObjects.Count; ++oi)
+                    for (int oi = 0; oi < workingObjects.Count; oi++)
                     {
                         var materials = workingObjects[oi].Materials;
 
-                        for (int m = 0; m < materials.Count; ++m)
+                        for (int m = 0; m < materials.Count; m++)
                         {
                             var materialTextures = cache.GetMaterialTextures(materials[m]);
                             if (materialTextures == null)
@@ -221,7 +221,7 @@ namespace Unity.HLODSystem
                 }
             }
 
-            packer.Pack(TextureFormat.RGBA32, options.PackTextureSize, options.LimitTextureSize, false);
+            packer.Pack(TextureFormat.RGBA32, Convert.ToInt32(options["PackTextureSize"]), Convert.ToInt32(options["LimitTextureSize"]), false);
             if ( onProgress != null) onProgress(0.3f);
 
             int index = 1;
@@ -229,7 +229,7 @@ namespace Unity.HLODSystem
             foreach (var atlas in atlases)
             {
                 Dictionary<string, WorkingTexture> textures = new Dictionary<string, WorkingTexture>();
-                for (int i = 0; i < atlas.Textures.Count; ++i)
+                for (int i = 0; i < atlas.Textures.Count; i++)
                 {
                     WorkingTexture wt = atlas.Textures[i];
                     wt.Name = "CombinedTexture " + index + "_" + i;
@@ -241,7 +241,7 @@ namespace Unity.HLODSystem
                     textures.Add(textureInfoList[i].OutputName, wt);
                 }
                 
-                WorkingMaterial mat = CreateMaterial(options.MaterialGUID, textures);
+                WorkingMaterial mat = CreateMaterial(options["MaterialGUID"] as string, textures);
                 mat.Name = "CombinedMaterial " + index;
                 m_createdMaterials.Add(atlas, mat);
                 index += 1;
@@ -274,13 +274,13 @@ namespace Unity.HLODSystem
             return material;
         }
 
-        private void Combine(Transform rootTransform, TexturePacker packer, HLODBuildInfo info, dynamic options)
+        private void Combine(Transform rootTransform, TexturePacker packer, HLODBuildInfo info, SerializableDynamicObject options)
         {
             var atlas = packer.GetAtlas(info);
             if (atlas == null)
                 return;
 
-            List<TextureInfo> textureInfoList = options.TextureInfoList;
+            List<TextureInfo> textureInfoList = options["TextureInfoList"] as List<TextureInfo>;
             List<MeshCombiner.CombineInfo> combineInfos = new List<MeshCombiner.CombineInfo>();
             var hlodWorldToLocal = rootTransform.worldToLocalMatrix;
 
@@ -424,36 +424,37 @@ namespace Unity.HLODSystem
             }
 
             EditorGUI.indentLevel += 1;
-            dynamic batcherOptions = hlod.BatcherOptions;
+            SerializableDynamicObject batcherOptions = hlod.BatcherOptions;
 
-            if (batcherOptions.PackTextureSize == null)
-                batcherOptions.PackTextureSize = 1024;
-            if (batcherOptions.LimitTextureSize == null)
-                batcherOptions.LimitTextureSize = 128;
-            if (batcherOptions.MaterialGUID == null)
-                batcherOptions.MaterialGUID = "";
-            if (batcherOptions.TextureInfoList == null)
+            if (batcherOptions["PackTextureSize"] == null)
+                batcherOptions["PackTextureSize"] = 1024;
+            if (batcherOptions["LimitTextureSize"] == null)
+                batcherOptions["LimitTextureSize"] = 128;
+            if (batcherOptions["MaterialGUID"] == null)
+                batcherOptions["MaterialGUID"] = "";
+            if (batcherOptions["TextureInfoList"] == null)
             {
-                batcherOptions.TextureInfoList = new List<TextureInfo>();
-                batcherOptions.TextureInfoList.Add(new TextureInfo()
+                var list = new List<TextureInfo>();
+                list.Add(new TextureInfo()
                 {
                     InputName = "_MainTex",
                     OutputName = "_MainTex",
                     Type = PackingType.White
                 });
+                batcherOptions["TextureInfoList"] = list;
             }
 
-            if (batcherOptions.EnableTintColor == null)
-                batcherOptions.EnableTintColor = false;
-            if (batcherOptions.TintColorName == null)
-                batcherOptions.TintColorName = "";
+            if (batcherOptions["EnableTintColor"] == null)
+                batcherOptions["EnableTintColor"] = false;
+            if (batcherOptions["TintColorName"] == null)
+                batcherOptions["TintColorName"] = "";
 
-            batcherOptions.PackTextureSize = EditorGUILayout.IntPopup("Pack texture size", batcherOptions.PackTextureSize, Styles.PackTextureSizeNames, Styles.PackTextureSizes);
-            batcherOptions.LimitTextureSize = EditorGUILayout.IntPopup("Limit texture size", batcherOptions.LimitTextureSize, Styles.LimitTextureSizeNames, Styles.LimitTextureSizes);
+            batcherOptions["PackTextureSize"] = EditorGUILayout.IntPopup("Pack texture size", Convert.ToInt32(batcherOptions["PackTextureSize"]), Styles.PackTextureSizeNames, Styles.PackTextureSizes);
+            batcherOptions["LimitTextureSize"] = EditorGUILayout.IntPopup("Limit texture size", Convert.ToInt32(batcherOptions["LimitTextureSize"]), Styles.LimitTextureSizeNames, Styles.LimitTextureSizes);
 
             Material mat = null;
 
-            string matGUID = batcherOptions.MaterialGUID;
+            string matGUID = batcherOptions["MaterialGUID"] as string;
             string path = "";
             if (string.IsNullOrEmpty(matGUID) == false)
             {
@@ -468,9 +469,9 @@ namespace Unity.HLODSystem
             matGUID = AssetDatabase.AssetPathToGUID(path);
             
 
-            if (matGUID != batcherOptions.MaterialGUID)
+            if (matGUID != (batcherOptions["MaterialGUID"] as string))
             {
-                batcherOptions.MaterialGUID = matGUID;
+                batcherOptions["MaterialGUID"] = matGUID;
                 outputTexturePropertyNames = mat.GetTexturePropertyNames();
             }
             if (inputTexturePropertyNames == null)
@@ -483,9 +484,9 @@ namespace Unity.HLODSystem
             }
             
             //apply tint color
-            batcherOptions.EnableTintColor =
-                EditorGUILayout.Toggle("Enable tint color", batcherOptions.EnableTintColor);
-            if (batcherOptions.EnableTintColor == true)
+            batcherOptions["EnableTintColor"] =
+                EditorGUILayout.Toggle("Enable tint color", Convert.ToBoolean(batcherOptions["EnableTintColor"]));
+            if (Convert.ToBoolean(batcherOptions["EnableTintColor"]) == true)
             {
                 EditorGUI.indentLevel += 1;
                 
@@ -501,15 +502,15 @@ namespace Unity.HLODSystem
                     }
                 }
 
-                int index = colorPropertyNames.IndexOf(batcherOptions.TintColorName);
+                int index = colorPropertyNames.IndexOf(batcherOptions["TintColorName"] as string);
                 index = EditorGUILayout.Popup("Tint color property", index, colorPropertyNames.ToArray());
                 if (index >= 0)
                 {
-                    batcherOptions.TintColorName = colorPropertyNames[index];
+                    batcherOptions["TintColorName"] = colorPropertyNames[index];
                 }
                 else
                 {
-                    batcherOptions.TintColorName = "";
+                    batcherOptions["TintColorName"] = "";
                 }
                 
                 EditorGUI.indentLevel -= 1;
@@ -527,9 +528,10 @@ namespace Unity.HLODSystem
             EditorGUILayout.SelectableLabel("Type");
             EditorGUILayout.EndHorizontal();
 
-            for (int i = 0; i < batcherOptions.TextureInfoList.Count; ++i)
+            List<TextureInfo> textureInfoList = batcherOptions["TextureInfoList"] as List<TextureInfo>;
+            for (int i = 0; i < textureInfoList.Count; ++i)
             {
-                TextureInfo info = batcherOptions.TextureInfoList[i];
+                TextureInfo info = textureInfoList[i];
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PrefixLabel(" ");
 
@@ -541,7 +543,7 @@ namespace Unity.HLODSystem
                     GUI.enabled = false;
                 if (GUILayout.Button("x") == true)
                 {
-                    batcherOptions.TextureInfoList.RemoveAt(i);
+                    textureInfoList.RemoveAt(i);
                     i -= 1;
                 }
                 if (i == 0)
@@ -553,7 +555,7 @@ namespace Unity.HLODSystem
             EditorGUILayout.PrefixLabel(" ");
             if (GUILayout.Button("Add new texture property") == true)
             {
-                batcherOptions.TextureInfoList.Add(new TextureInfo());
+                textureInfoList.Add(new TextureInfo());
             }
 
             EditorGUILayout.EndHorizontal();

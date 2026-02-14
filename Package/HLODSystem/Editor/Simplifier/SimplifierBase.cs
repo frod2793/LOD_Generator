@@ -10,81 +10,70 @@ namespace Unity.HLODSystem.Simplifier
 {
     public abstract class SimplifierBase : ISimplifier
     {
-        private dynamic m_options;
+        private SerializableDynamicObject m_options;
         public SimplifierBase(SerializableDynamicObject simplifierOptions)
         {
             m_options = simplifierOptions;
         }
+
         public IEnumerator Simplify(HLODBuildInfo buildInfo)
         {
+            if (m_options == null)
+                yield break;
+
             for (int i = 0; i < buildInfo.WorkingObjects.Count; ++i)
             {
                 Utils.WorkingMesh mesh = buildInfo.WorkingObjects[i].Mesh;
 
                 int triangleCount = mesh.triangles.Length / 3;
-                float maxQuality = Mathf.Min((float)m_options.SimplifyMaxPolygonCount / (float)triangleCount, (float)m_options.SimplifyPolygonRatio);
-                float minQuality = Mathf.Max((float)m_options.SimplifyMinPolygonCount / (float)triangleCount, 0.0f);
+                float simplifyMaxPolygonCount = Convert.ToSingle(m_options["SimplifyMaxPolygonCount"]);
+                float simplifyPolygonRatio = Convert.ToSingle(m_options["SimplifyPolygonRatio"]);
+                float simplifyMinPolygonCount = Convert.ToSingle(m_options["SimplifyMinPolygonCount"]);
 
-                var ratio = maxQuality * Mathf.Pow((float)m_options.SimplifyPolygonRatio, buildInfo.Distances[i]);
+                float maxQuality = Mathf.Min(simplifyMaxPolygonCount / (float)triangleCount, simplifyPolygonRatio);
+                float minQuality = Mathf.Max(simplifyMinPolygonCount / (float)triangleCount, 0.0f);
+
+                var ratio = maxQuality * Mathf.Pow(simplifyPolygonRatio, buildInfo.Distances[i]);
                 ratio = Mathf.Max(ratio, minQuality);
 
-                
-//                while (Cache.SimplifiedCache.IsGenerating(GetType(), mesh, ratio) == true)
-//                {
-//                    yield return null;
-//                }
-//                Mesh simplifiedMesh = Cache.SimplifiedCache.Get(GetType(), mesh, ratio);
-//                if (simplifiedMesh == null)
-//                {
-//                    Cache.SimplifiedCache.MarkGenerating(GetType(), mesh, ratio);
-                    yield return GetSimplifiedMesh(mesh, ratio, (m) =>
-                    {
-                        buildInfo.WorkingObjects[i].SetMesh(m);
-                    });
-//                    Cache.SimplifiedCache.Update(GetType(), mesh, simplifiedMesh, ratio);
-                    
-//                }
-
+                yield return GetSimplifiedMesh(mesh, ratio, (m) =>
+                {
+                    buildInfo.WorkingObjects[i].SetMesh(m);
+                });
             }            
         }
 
         public void SimplifyImmidiate(HLODBuildInfo buildInfo)
         {
-            
             IEnumerator routine = Simplify(buildInfo);
             CustomCoroutine coroutine = new CustomCoroutine(routine);
             while (coroutine.MoveNext())
             {
-                
             }
-            
         }
 
         protected abstract IEnumerator GetSimplifiedMesh(Utils.WorkingMesh origin, float quality, Action<Utils.WorkingMesh> resultCallback);
 
         protected static void OnGUIBase(SerializableDynamicObject simplifierOptions)
         {
+            if (simplifierOptions == null) return;
             EditorGUI.indentLevel += 1;
 
-            dynamic options = simplifierOptions;
+            if (simplifierOptions["SimplifyPolygonRatio"] == null)
+                simplifierOptions["SimplifyPolygonRatio"] = 0.8f;
+            if (simplifierOptions["SimplifyMinPolygonCount"] == null)
+                simplifierOptions["SimplifyMinPolygonCount"] = 10;
+            if (simplifierOptions["SimplifyMaxPolygonCount"] == null)
+                simplifierOptions["SimplifyMaxPolygonCount"] = 500;
 
-            if (options.SimplifyPolygonRatio == null)
-                options.SimplifyPolygonRatio = 0.8f;
-            if (options.SimplifyMinPolygonCount == null)
-                options.SimplifyMinPolygonCount = 10;
-            if (options.SimplifyMaxPolygonCount == null)
-                options.SimplifyMaxPolygonCount = 500;
-            
-
-            options.SimplifyPolygonRatio = EditorGUILayout.Slider("Polygon Ratio", options.SimplifyPolygonRatio, 0.0f, 1.0f);
+            simplifierOptions["SimplifyPolygonRatio"] = EditorGUILayout.Slider("Polygon Ratio", Convert.ToSingle(simplifierOptions["SimplifyPolygonRatio"]), 0.0f, 1.0f);
             EditorGUILayout.LabelField("Triangle Range");
             EditorGUI.indentLevel += 1;
-            options.SimplifyMinPolygonCount = EditorGUILayout.IntSlider("Min", options.SimplifyMinPolygonCount, 10, 100);
-            options.SimplifyMaxPolygonCount = EditorGUILayout.IntSlider("Max", options.SimplifyMaxPolygonCount, 10, 5000);
+            simplifierOptions["SimplifyMinPolygonCount"] = EditorGUILayout.IntSlider("Min", Convert.ToInt32(simplifierOptions["SimplifyMinPolygonCount"]), 10, 100);
+            simplifierOptions["SimplifyMaxPolygonCount"] = EditorGUILayout.IntSlider("Max", Convert.ToInt32(simplifierOptions["SimplifyMaxPolygonCount"]), 10, 5000);
             EditorGUI.indentLevel -= 1;
 
             EditorGUI.indentLevel -= 1;
         }
-        
     }
 }

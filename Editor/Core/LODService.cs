@@ -57,6 +57,9 @@ namespace Plugins.Auto_LOD_Generator.Editor.Core
         /// </summary>
         private void HandleStandardLODGeneration(GameObject originalObject, float qualityFactor, string savePath, bool useCollider, GameObject newParent, LODGroup lodGroup, LOD[] lods)
         {
+            // 오브젝트별 전용 LOD 폴더 경로 설정
+            string lodPath = $"{savePath}/{originalObject.name}/LOD";
+
             try
             {
                 AssetDatabase.StartAssetEditing();
@@ -67,7 +70,7 @@ namespace Plugins.Auto_LOD_Generator.Editor.Core
                     newGameObj.name = $"{originalObject.name}_LOD{i}";
 
                     float currentQuality = (i == 0) ? 1.0f : qualityFactor * m_qualityFactors[i - 1];
-                    ProcessRecursiveMeshSimplification(newGameObj, currentQuality, $"LOD{i}", savePath);
+                    ProcessRecursiveMeshSimplification(newGameObj, currentQuality, $"LOD{i}", lodPath);
 
                     Renderer[] renderers = newGameObj.GetComponentsInChildren<Renderer>();
                     lods[i] = new LOD(0.5f / (i + 1), renderers);
@@ -116,7 +119,16 @@ namespace Plugins.Auto_LOD_Generator.Editor.Core
             if (batcherTypes.Any()) hlod.BatcherType = (batcherTypes.Count() > 1) ? batcherTypes.Skip(1).First() : batcherTypes.First();
             if (streamingTypes.Any()) hlod.StreamingType = streamingTypes.First();
 
-            // 3. 표준 LOD 생성 수행
+            // HLOD 출력 경로 지정 ([savePath]/[ObjectName]/HLOD)
+            string hlodPath = $"{savePath}/{originalObject.name}/HLOD/";
+            var options = hlod.StreamingOptions;
+
+            if (options != null)
+            {
+                options["OutputDirectory"] = hlodPath;
+            }
+
+            // 3. 표준 LOD 생성 수행 (지정된 폴더 구조 사용)
             HandleStandardLODGeneration(originalObject, qualityFactor, savePath, useCollider, newParent, lodGroup, lods);
 
             // 4. HLOD 베이크 코루틴 비동기 실행 (생성된 hlod 컴포넌트 기준)
